@@ -463,6 +463,7 @@ module Testing = struct
     ; fdname= "sars"
     ; fdsuffix= FnPlain
     ; fdargs= [(DataOnly, "x", UMatrix); (AutoDiffable, "y", URowVector)]
+    ; fdannotations= []
     ; fdbody=
         Stmt.Pattern.Return
           (Some
@@ -526,6 +527,7 @@ module Testing = struct
         [ (DataOnly, "x", UMatrix); (AutoDiffable, "y", URowVector)
         ; (AutoDiffable, "z", URowVector); (AutoDiffable, "w", UArray UMatrix)
         ]
+    ; fdannotations= []
     ; fdbody=
         Stmt.Pattern.Return
           (Some

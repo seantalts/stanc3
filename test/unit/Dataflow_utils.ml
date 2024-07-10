@@ -275,13 +275,41 @@ let%expect_test "Statement label map example" =
             (FunApp (Operator Plus)
              (((pattern (Var i))
                (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
-              ((pattern (Var j))
+              ((pattern
+                (FunApp (Operator PMinus)
+                 (((pattern (Lit Int 1))
+                   (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
                (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-           (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-       (22
-        (NRFunApp (CompilerInternal FnPrint)
-         (((pattern (Lit Str Fin))
-           (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))))))
+           (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))))
+        (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+       15 ()))
+     (15 (Block (16))) (16 Continue)
+     (17
+      (IfElse
+       ((pattern
+         (FunApp (Operator Greater)
+          (((pattern (Var j))
+            (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+           ((pattern (Lit Int 5))
+            (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+        (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+       18 (20)))
+     (18 (Block (19))) (19 Continue) (20 (Block (21)))
+     (21
+      (NRFunApp (CompilerInternal FnPrint)
+       (((pattern (Lit Str Badger))
+         (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))
+        ((pattern
+          (FunApp (Operator Plus)
+           (((pattern (Var i))
+             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+            ((pattern (Var j))
+             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+         (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+     (22
+      (NRFunApp (CompilerInternal FnPrint)
+       (((pattern (Lit Str Fin))
+         (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))))))
     |}]
 
 let%expect_test "Predecessor graph example" =

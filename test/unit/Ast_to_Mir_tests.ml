@@ -81,8 +81,9 @@ let%expect_test "read data" =
              (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))
            ((pattern (Lit Int 5))
             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-        (initialize Default)))
-      (meta <opaque>))) |}]
+        (initialize Default) (decl_annotations ())))
+      (meta <opaque>)))
+    |}]
 
 let%expect_test "read param" =
   let m =
@@ -103,8 +104,9 @@ let%expect_test "read param" =
              (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))
            ((pattern (Lit Int 5))
             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-        (initialize Default)))
-      (meta <opaque>))) |}]
+        (initialize Default) (decl_annotations ())))
+      (meta <opaque>)))
+    |}]
 
 let%expect_test "gen quant" =
   let m =
@@ -148,7 +150,7 @@ let%expect_test "gen quant" =
              (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))
            ((pattern (Lit Int 5))
             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-        (initialize Default)))
+        (initialize Default) (decl_annotations ())))
       (meta <opaque>))
      ((pattern
        (NRFunApp
@@ -164,37 +166,39 @@ let%expect_test "gen quant" =
             (meta ((type_ (UArray UMatrix)) (loc <opaque>) (adlevel DataOnly)))))))
         (((pattern (Lit Int 0))
           (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-      (meta <opaque>))) |}]
+      (meta <opaque>)))
+    |}]
 
 let%expect_test "read data - constraint " =
   let m = Test_utils.mir_of_string "data { array[5] real<lower=3.4> y; }" in
   print_s [%sexp (m.prepare_data : Stmt.Located.t list)];
   [%expect
     {|
-  (((pattern
-     (Decl (decl_adtype DataOnly) (decl_id y)
-      (decl_type
-       (Sized
-        (SArray SReal
-         ((pattern (Lit Int 5))
-          (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-      (initialize Default)))
-    (meta <opaque>))
-   ((pattern
-     (NRFunApp
-      (CompilerInternal
-       (FnCheck
-        (trans
-         (Lower
-          ((pattern (Lit Real 3.4))
-           (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))))
-        (var_name y)
-        (var
-         ((pattern (Var y))
-          (meta ((type_ (UArray UReal)) (loc <opaque>) (adlevel DataOnly)))))))
-      (((pattern (Lit Real 3.4))
-        (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly)))))))
-    (meta <opaque>))) |}]
+    (((pattern
+       (Decl (decl_adtype DataOnly) (decl_id y)
+        (decl_type
+         (Sized
+          (SArray SReal
+           ((pattern (Lit Int 5))
+            (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+        (initialize Default) (decl_annotations ())))
+      (meta <opaque>))
+     ((pattern
+       (NRFunApp
+        (CompilerInternal
+         (FnCheck
+          (trans
+           (Lower
+            ((pattern (Lit Real 3.4))
+             (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))))
+          (var_name y)
+          (var
+           ((pattern (Var y))
+            (meta ((type_ (UArray UReal)) (loc <opaque>) (adlevel DataOnly)))))))
+        (((pattern (Lit Real 3.4))
+          (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly)))))))
+      (meta <opaque>)))
+    |}]
 
 let%expect_test "read data - tuple" =
   let m =
@@ -215,7 +219,7 @@ let%expect_test "read data - tuple" =
                (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
            ((pattern (Lit Int 5))
             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-        (initialize Default)))
+        (initialize Default) (decl_annotations ())))
       (meta <opaque>))
      ((pattern
        (For (loopvar idx1__)
