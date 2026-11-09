@@ -524,7 +524,11 @@ module TypeError = struct
           "Function %a has already been declared. A definition is expected."
           quoted name
     | FunDeclNoDefn name ->
-        make_error "Function %a is declared without specifying a definition."
+        make_error
+          "@[<v>Function %a is declared without specifying a definition.@,\
+           If this function will be supplied elsewhere after compilation (e.g., \
+           it is being manually implemented in C++) consider marking it with \
+           '@@extern' to silence this error.@]"
           quoted name
     | NonRealProbFunDef Void ->
         make_error
