@@ -56,6 +56,10 @@ val matching_function :
 (** Searches for a function of the given name which can support the required
     argument types. Requires a unique minimum option under type promotion *)
 
+val with_stanlib_cache : (unit -> 'a) -> 'a
+(** Install a fresh, bounded built-in signature cache for this call; restore the
+    previous scope on both success and exception. *)
+
 val matching_stanlib_function :
   string -> UnsizedType.argumentlist -> match_result
 (** Same as [matching_function] but requires specifically that the function be

@@ -289,8 +289,31 @@ let matching_function env name args =
         UnsizedType.compare_returntype ret1 ret2) in
   find_compatible_rt function_types args
 
+(* Only the immutable Stan Math environment is cached. User environments,
+   promotions, qualifiers and higher-order argument types remain distinct. The
+   portable producer owns this bounded, exception-safe compile scope. *)
+let stanlib_cache = ref None
+
+let with_stanlib_cache f =
+  let previous = !stanlib_cache in
+  stanlib_cache := Some (Stdlib.Hashtbl.create 128);
+  Stdlib.Fun.protect f ~finally:(fun () -> stanlib_cache := previous)
+
 let matching_stanlib_function name args =
-  matching_function (Lazy.force Environment.stan_math_environment) name args
+  let lookup () =
+    matching_function (Lazy.force Environment.stan_math_environment) name args
+  in
+  match !stanlib_cache with
+  | None -> lookup ()
+  | Some cache -> (
+      let key = (name, args) in
+      match Stdlib.Hashtbl.find_opt cache key with
+      | Some result -> result
+      | None ->
+          let result = lookup () in
+          if Stdlib.Hashtbl.length cache < 4096 then
+            Stdlib.Hashtbl.add cache key result;
+          result)
 
 let check_variadic_args ~allow_lpdf mandatory_arg_tys mandatory_fun_arg_tys
     location fun_return args =
