@@ -1,7 +1,8 @@
 (* Code for optimization passes on the MIR *)
 open Middle
 
-val function_inlining : Program.Typed.t -> Program.Typed.t
+val function_inlining :
+  ?bind_repeated_scalar_args:bool -> Program.Typed.t -> Program.Typed.t
 (** Inline all functions except for ones with forward declarations (e.g.
     recursive functions, mutually recursive functions, and functions without a
     definition *)
