@@ -936,6 +936,70 @@ let%expect_test "inline function multiple returns " =
         if(PNot__(emit_generated_quantities__)) return;
       } |}]
 
+let%expect_test "inline function return inside while" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real f(real x) {
+          while (x < -1) {
+            return -4 * x;
+          }
+          return x + 7;
+        }
+      }
+      model {
+        print(f(-1.6));
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
+  [%expect
+    {|
+    functions {
+      real f(real x) {
+        {
+          while((x < PMinus__(1))) {
+            return (promote(PMinus__(4), real, data) * x);
+          }
+          return (x + promote(7, real, data));
+        }
+      }
+    }
+
+
+
+    log_prob {
+      {
+        real inline_f_return_sym1__;
+        data int inline_f_early_ret_check_sym2__;
+        inline_f_early_ret_check_sym2__ = 0;
+        for(inline_f_iterator_sym3__ in 1:1) {
+          while((PMinus__(1.6) < PMinus__(1))) {
+            inline_f_early_ret_check_sym2__ = 1;
+            inline_f_return_sym1__ = (promote(PMinus__(4), real, data) * PMinus__(1.6));
+            break;
+          }
+          if(inline_f_early_ret_check_sym2__) break;
+          inline_f_early_ret_check_sym2__ = 1;
+          inline_f_return_sym1__ = (PMinus__(1.6) + promote(7, real, data));
+          break;
+        }
+        FnPrint__(inline_f_return_sym1__);
+      }
+    }
+
+
+    generate_quantities {
+      if(emit_transformed_parameters__) ; else {
+
+      }
+      if(PNot__(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(PNot__(emit_generated_quantities__)) return;
+    }
+    |}]
+
 let%expect_test "inline function indices " =
   let mir =
     reset_and_mir_of_string
