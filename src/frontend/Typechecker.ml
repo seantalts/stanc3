@@ -2219,7 +2219,18 @@ let check_functions_block ~allow_undefined_functions tenv stmts_opt =
         | Env.{kind= `UserDeclared loc; _} ->
             Semantic_error.fn_decl_without_def loc name |> error
         | _ -> ()) in
-  if not allow_undefined_functions then Env.iteri tenv error_on_undefined;
+  (* Only source function names can contain UserDeclared entries. Preserve the
+     environment's lexical order without forcing every built-in overload merely
+     to establish that Stan Math contains no undefined user function. *)
+  if not allow_undefined_functions then
+    Option.iter stmts_opt ~f:(fun {stmts; _} ->
+        List.filter_map stmts ~f:(fun s ->
+            match s.stmt with
+            | FunDef {funname; _} -> Some funname.name
+            | _ -> None)
+        |> String.Set.of_list
+        |> String.Set.iter ~f:(fun name ->
+            error_on_undefined name (Env.find tenv name)));
   (tenv, typed_fb)
 
 let verify_correctness_invariant (ast : untyped_program)

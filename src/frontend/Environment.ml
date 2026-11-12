@@ -39,23 +39,29 @@ let location = function
       Some location
   | {kind= `StanMath; _} -> None
 
-type t = info list String.Map.t
+type t = info list Lazy.t String.Map.t
 
 let stan_math_environment =
-  Lazy.map Stan_math_signatures.signatures_alist ~f:(fun signatures ->
+  Lazy.map Stan_math_signatures.lazy_signatures_alist ~f:(fun signatures ->
       List.map signatures ~f:(fun (key, values) ->
           ( key
-          , List.map values ~f:(fun s ->
-                {type_= UnsizedType.UFun s; kind= `StanMath}) ))
+          , Lazy.map values
+              ~f:
+                (List.map ~f:(fun s ->
+                     {type_= UnsizedType.UFun s; kind= `StanMath})) ))
       |> String.Map.of_list)
 
-let add env name type_ kind =
-  String.Map.add_to_list env ~key:name ~data:{type_; kind}
+let find env key =
+  match String.Map.find_opt key env with
+  | Some values -> Lazy.force values
+  | None -> []
 
-let set_raw env key data = String.Map.add env ~key ~data
-let find env key = String.Map.find_multi key env
+let set_raw env key data = String.Map.add env ~key ~data:(Lazy.from_val data)
+let add env name type_ kind = set_raw env name ({type_; kind} :: find env name)
 let mem env key = String.Map.mem key env
-let iteri env f = String.Map.iter env ~f:(fun ~key ~data -> f key data)
+
+let iteri env f =
+  String.Map.iter env ~f:(fun ~key ~data -> f key (Lazy.force data))
 
 let nearest_ident env name =
   let open Option.Syntax in
@@ -78,4 +84,4 @@ let nearest_ident env name =
     |> List.filter ~f:(mem env) in
   let* key = Option.first_some (List.hd suggestions) (List.hd other_suffixes) in
   let+ values = String.Map.find_opt key env in
-  (key, List.map ~f:location values)
+  (key, List.map ~f:location (Lazy.force values))

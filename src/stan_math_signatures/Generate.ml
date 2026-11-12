@@ -2725,10 +2725,14 @@ let unmarshal_hashtbl s : (string, 'a) Hashtbl.t =
   Printf.printf
     {|
 let stan_math_signatures :
-    (string, Middle.UnsizedType.signature list) Hashtbl.t Lazy.t=
-  lazy (fst @@ Gc.ramp_up @@
-        fun () -> unmarshal_hashtbl %S) |}
-    (marshal_hashtbl stan_math_signatures);
+    (string, Middle.UnsizedType.signature list Lazy.t) Hashtbl.t Lazy.t =
+  lazy (unmarshal %S
+        |> List.map ~f:(fun (name, bytes) -> (name, lazy (unmarshal bytes)))
+        |> List.to_seq |> Hashtbl.of_seq) |}
+    (marshal
+       (Hashtbl.to_seq stan_math_signatures
+       |> List.of_seq
+       |> List.map ~f:(fun (name, signatures) -> (name, marshal signatures))));
   Printf.printf
     {|
 let stan_math_variadic_signatures :

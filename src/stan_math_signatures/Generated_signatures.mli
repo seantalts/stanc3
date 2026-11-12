@@ -5,7 +5,8 @@
 
 open Middle
 
-val stan_math_signatures : (string, UnsizedType.signature list) Hashtbl.t Lazy.t
+val stan_math_signatures :
+  (string, UnsizedType.signature list Lazy.t) Hashtbl.t Lazy.t
 
 val stan_math_variadic_signatures :
   (string, UnsizedType.variadic_signature) Hashtbl.t

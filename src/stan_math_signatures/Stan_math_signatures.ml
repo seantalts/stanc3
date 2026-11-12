@@ -16,10 +16,16 @@ let is_stan_math_function_name name =
   Hashtbl.mem (Lazy.force stan_math_signatures) name
 
 let lookup_stan_math_function name =
-  Hashtbl.find_multi (Lazy.force stan_math_signatures) name
+  match Hashtbl.find_opt (Lazy.force stan_math_signatures) name with
+  | Some signatures -> Lazy.force signatures
+  | None -> []
+
+let lazy_signatures_alist =
+  Lazy.map stan_math_signatures ~f:(Fun.compose List.of_seq Hashtbl.to_seq)
 
 let signatures_alist =
-  Lazy.map stan_math_signatures ~f:(Fun.compose List.of_seq Hashtbl.to_seq)
+  Lazy.map lazy_signatures_alist
+    ~f:(List.map ~f:(fun (name, signatures) -> (name, Lazy.force signatures)))
 
 let is_stan_math_variadic_function_name =
   Hashtbl.mem stan_math_variadic_signatures
@@ -62,8 +68,7 @@ let int_divide_type =
 
 let get_sigs name =
   let name = Utils.stdlib_distribution_name name in
-  Hashtbl.find_multi (Lazy.force stan_math_signatures) name
-  |> List.sort ~cmp:UnsizedType.compare_signature
+  lookup_stan_math_function name |> List.sort ~cmp:UnsizedType.compare_signature
 
 let make_assignmentoperator_stan_math_signatures assop =
   (match assop with

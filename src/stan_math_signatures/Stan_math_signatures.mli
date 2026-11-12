@@ -11,6 +11,10 @@ val lookup_stan_math_function : string -> UnsizedType.signature list
 (** Look up the signature of a Stan Math library function. If it is not found,
     this returns [[]] *)
 
+val lazy_signatures_alist :
+  (string * UnsizedType.signature list Lazy.t) list Lazy.t
+(** Each immutable overload set is materialized only when first consulted. *)
+
 val signatures_alist : (string * UnsizedType.signature list) list Lazy.t
 (** Get all the signatures in the Stan Math library *)
 
