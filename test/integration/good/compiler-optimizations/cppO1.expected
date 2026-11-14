@@ -15432,10 +15432,9 @@ class function_in_function_inline_model final : public model_base_crtp<function_
     (void) function__;
     try {
       local_scalar_t__ ret = DUMMY_VAR__;
-      local_scalar_t__ inline_outer_lpdf_return_sym12__;
+      double inline_outer_lpdf_return_sym12__;
       {
-        local_scalar_t__
-          inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym13__;
+        double inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym13__;
         {
           current_statement__ = 2;
           inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym13__ = 
@@ -15476,10 +15475,9 @@ class function_in_function_inline_model final : public model_base_crtp<function_
     (void) function__;
     try {
       local_scalar_t__ ret = DUMMY_VAR__;
-      local_scalar_t__ inline_outer_lpdf_return_sym9__;
+      double inline_outer_lpdf_return_sym9__;
       {
-        local_scalar_t__
-          inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym10__;
+        double inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym10__;
         {
           current_statement__ = 2;
           inline_outer_lpdf_inline_inner_lpdf_return_sym5___sym10__ = 

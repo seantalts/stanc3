@@ -148,9 +148,9 @@ let%expect_test "inline functions" =
                                      FnMakeRowVec__(promote(4, real, data),
                                                     promote(6, real, data))));
           }
-          real inline_g_return_sym2__;
+          data real inline_g_return_sym2__;
           {
-            inline_g_return_sym2__ = promote((53 ^ 2), real, var);
+            inline_g_return_sym2__ = promote((53 ^ 2), real, data);
           }
           FnReject__(inline_g_return_sym2__);
         }
@@ -337,7 +337,7 @@ let%expect_test "list collapsing" =
             (meta <opaque>)))))
         (meta <opaque>))
        ((pattern
-         (Decl (decl_adtype AutoDiffable) (decl_id inline_g_return_sym2__)
+         (Decl (decl_adtype DataOnly) (decl_id inline_g_return_sym2__)
           (decl_type (Sized SReal)) (initialize Uninit)))
         (meta <opaque>))
        ((pattern
@@ -353,14 +353,14 @@ let%expect_test "list collapsing" =
                      ((pattern (Lit Int 2))
                       (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
                   (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))
-                 UReal AutoDiffable))
-               (meta ((type_ UReal) (loc <opaque>) (adlevel AutoDiffable))))))
+                 UReal DataOnly))
+               (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly))))))
             (meta <opaque>)))))
         (meta <opaque>))
        ((pattern
          (NRFunApp (CompilerInternal FnReject)
           (((pattern (Var inline_g_return_sym2__))
-            (meta ((type_ UReal) (loc <opaque>) (adlevel AutoDiffable)))))))
+            (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly)))))))
         (meta <opaque>)))))
     (meta <opaque>))))
  (reverse_mode_log_prob ())
@@ -972,7 +972,7 @@ let%expect_test "inline function return inside while" =
 
     log_prob {
       {
-        real inline_f_return_sym1__;
+        data real inline_f_return_sym1__;
         data int inline_f_early_ret_check_sym2__;
         inline_f_early_ret_check_sym2__ = 0;
         for(inline_f_iterator_sym3__ in 1:1) {
@@ -5146,4 +5146,86 @@ let%expect_test "inlined data actuals keep their adlevel" =
     (normal_lpdf (AutoDiffable DataOnly DataOnly))
     (normal_lcdf (DataOnly DataOnly DataOnly))
     (normal_lpdf (AutoDiffable DataOnly DataOnly))
+    |}]
+
+let%expect_test "inlined calls with data actuals return data" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real widen(real s) {
+          return 2 * s;
+        }
+        void shifted_lp(real y, real s) {
+          real wide = 2 * s;
+          y ~ normal(1, wide);
+        }
+        real pick(real x, real s) {
+          real wide = s;
+          return x > 0 ? x : 1.0;
+        }
+      }
+      data {
+        real s;
+      }
+      parameters {
+        real tau;
+      }
+      model {
+        tau ~ normal(0, widen(s));
+        shifted_lp(0.25, s);
+        shifted_lp(tau, s);
+        tau ~ normal(pick(s, s), pick(tau, s));
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
+  [%expect
+    {|
+    real tau;
+    {
+      data real inline_widen_return_sym1__;
+      {
+        inline_widen_return_sym1__ = (promote(2, real, data) * s);
+      }
+      target += normal_lupdf(tau, promote(0, real, data),
+                             inline_widen_return_sym1__);
+      {
+        data real inline_shifted_lp_wide_sym3__;
+        inline_shifted_lp_wide_sym3__ = (promote(2, real, data) * s);
+        target += normal_lupdf(0.25, promote(1, real, data),
+                               inline_shifted_lp_wide_sym3__);
+      }
+      {
+        real inline_shifted_lp_wide_sym5__;
+        inline_shifted_lp_wide_sym5__ = (promote(2, real, data) * s);
+        target += normal_lupdf(tau, promote(1, real, data),
+                               inline_shifted_lp_wide_sym5__);
+      }
+      real inline_pick_return_sym10__;
+      data real inline_pick_return_sym7__;
+      {
+        real inline_pick_wide_sym11__;
+        inline_pick_wide_sym11__ = s;
+        if((tau > 0)) {
+
+        } else {
+
+        }
+        inline_pick_return_sym10__ = ((tau > 0) ? tau : promote(1.0, real, var));
+      }
+      {
+        data real inline_pick_wide_sym8__;
+        inline_pick_wide_sym8__ = s;
+        if((s > 0)) {
+
+        } else {
+
+        }
+        inline_pick_return_sym7__ = ((s > 0) ? s : promote(1.0, real, data));
+      }
+      target += normal_lupdf(tau, inline_pick_return_sym7__,
+                             inline_pick_return_sym10__);
+    }
     |}]
