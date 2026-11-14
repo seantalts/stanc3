@@ -5229,3 +5229,49 @@ let%expect_test "inlined calls with data actuals return data" =
                              inline_pick_return_sym10__);
     }
     |}]
+
+let%expect_test "demoted inlined containers stay arrays of structs" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        vector indices(int M, real L) {
+          return linspaced_vector(M, 1, M) / L;
+        }
+      }
+      data {
+        int M;
+        real L;
+      }
+      parameters {
+        real rho;
+      }
+      model {
+        vector[M] d = rho * indices(M, L);
+        d ~ normal(0, 1);
+      }
+      |}
+  in
+  let mir = {mir with reverse_mode_log_prob= mir.log_prob} in
+  let mir = optimization_suite ~settings:(level_optimizations O1) mir in
+  let rec decls acc (s : Stmt.Located.t) =
+    let acc =
+      match s.pattern with
+      | Decl {decl_id; decl_adtype; decl_type= Sized st; _} ->
+          (decl_id, decl_adtype, SizedType.get_mem_pattern st) :: acc
+      | _ -> acc in
+    Stmt.Pattern.fold (fun acc _ -> acc) decls acc s.pattern in
+  List.fold_left ~init:[] ~f:decls mir.reverse_mode_log_prob
+  |> List.rev
+  |> List.iter ~f:(fun (name, ad, mem) ->
+      print_s
+        [%sexp
+          (name : string)
+        , (ad : UnsizedType.autodifftype)
+        , (mem : Mem_pattern.t)]);
+  [%expect
+    {|
+    (rho AutoDiffable AoS)
+    (d AutoDiffable AoS)
+    (inline_indices_return_sym1__ DataOnly AoS)
+    |}]

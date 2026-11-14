@@ -671,9 +671,13 @@ let rec modify_stmt_pattern
       let decl_type =
         let sized_type = Mir_utils.unsafe_unsized_to_sized_type decl_type in
         if SizedType.has_mem_pattern sized_type then
+          (* A double has no struct-of-arrays form. *)
           let mem =
-            if Set.Poly.mem decl_id modifiable_set then Mem_pattern.AoS else SoA
-          in
+            if
+              Set.Poly.mem decl_id modifiable_set
+              || not (UnsizedType.has_autodiff decl.decl_adtype)
+            then Mem_pattern.AoS
+            else SoA in
           Type.Sized (SizedType.modify_sizedtype_mem mem sized_type)
         else decl_type in
       Decl {decl with decl_type; initialize}
