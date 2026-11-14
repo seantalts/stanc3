@@ -5099,3 +5099,51 @@ let%expect_test "vectorize: multiple indexing" =
       }
     }
     |}]
+
+let%expect_test "inlined data actuals keep their adlevel" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        void prior_lp(real v, real p1, real p2) {
+          v ~ normal(p1, p2);
+          target += normal_lcdf(1 | p1, p2);
+        }
+        void priors_lp(vector v, vector p) {
+          for (i in 1:2) prior_lp(v[i], p[2 * i - 1], p[2 * i]);
+          if (v[1] > 0) v[2] ~ normal(0, p[4]);
+        }
+      }
+      data {
+        vector[4] p;
+      }
+      parameters {
+        vector[2] v;
+      }
+      model {
+        priors_lp(v, p);
+      }
+      |}
+  in
+  let mir = function_inlining ~bind_repeated_scalar_args:true mir in
+  let rec densities acc (s : Stmt.Located.t) =
+    let acc =
+      match s.pattern with
+      | TargetPE {pattern= FunApp (StanLib (name, _, _), args); _} ->
+          (name, List.map ~f:Expr.Typed.adlevel_of args) :: acc
+      | Decl {decl_id; decl_adtype; _} -> (decl_id, [decl_adtype]) :: acc
+      | _ -> acc in
+    Stmt.Pattern.fold (fun acc _ -> acc) densities acc s.pattern in
+  List.fold_left ~init:[] ~f:densities mir.log_prob
+  |> List.rev
+  |> List.iter ~f:(fun (name, ads) ->
+      print_s [%sexp (name : string), (ads : UnsizedType.autodifftype list)]);
+  [%expect
+    {|
+    (v (AutoDiffable))
+    (inline_priors_lp_inline_prior_lp_p2_arg_sym5___sym7__ (DataOnly))
+    (inline_priors_lp_inline_prior_lp_p1_arg_sym4___sym8__ (DataOnly))
+    (normal_lpdf (AutoDiffable DataOnly DataOnly))
+    (normal_lcdf (DataOnly DataOnly DataOnly))
+    (normal_lpdf (AutoDiffable DataOnly DataOnly))
+    |}]

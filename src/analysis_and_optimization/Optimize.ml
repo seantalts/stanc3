@@ -80,6 +80,10 @@ let slist_concat_no_loc l stmt =
 let gen_inline_var (name : string) (id_var : string) =
   Gensym.generate ~prefix:("inline_" ^ name ^ "_" ^ id_var ^ "_") ()
 
+(* The locals bind_repeated_scalar_actual introduced in this inlining run, under
+   every name inlining gave them. *)
+let bound_actuals = ref Set.Poly.empty
+
 let replace_fresh_local_vars (fname : string) stmt =
   let f (m : string String.Map.t) = function
     | Stmt.Pattern.Decl {decl_adtype; decl_type; decl_id; initialize} ->
@@ -87,6 +91,8 @@ let replace_fresh_local_vars (fname : string) stmt =
           match String.Map.find_opt decl_id m with
           | Some existing -> existing
           | None -> gen_inline_var fname decl_id in
+        if Set.Poly.mem decl_id !bound_actuals then
+          bound_actuals := Set.Poly.add new_name !bound_actuals;
         ( Stmt.Pattern.Decl
             {decl_adtype; decl_id= new_name; decl_type; initialize}
         , String.Map.add m ~key:decl_id ~data:new_name )
@@ -280,6 +286,7 @@ let bind_repeated_scalar_actual fname name body
     (decls, stmts, e)
   else
     let temp = gen_inline_var fname (name ^ "_arg") in
+    bound_actuals := Set.Poly.add temp !bound_actuals;
     ( decls
       @ [ Stmt.Pattern.Decl
             { decl_adtype= e.meta.adlevel
@@ -289,6 +296,54 @@ let bind_repeated_scalar_actual fname name body
     , stmts
       @ [Stmt.Pattern.Assignment (Stmt.Helpers.lvariable temp, e.meta.type_, e)]
     , {e with pattern= Var temp} )
+
+(* A callee body is typed with its formals' adlevels before the actuals are
+   substituted, so an expression over a formal keeps the formal's adlevel:
+   `s[i]` stays AutoDiffable after `s` becomes data. The local that binds a
+   repeated actual is declared with the adlevel its actual had in the enclosing
+   body, which is stale the same way once that body is itself inlined. Recompute
+   both from the variables they read, after substitution. A recomputed adlevel
+   only demotes AutoDiffable to DataOnly; promotions keep their target. *)
+let refresh_inlined_adlevels (body : Stmt.Located.t) =
+  let rec expr bound (e : Expr.Typed.t) =
+    let pattern = Expr.Pattern.map (expr bound) e.pattern in
+    let lub (es : Expr.Typed.t list) =
+      UnsizedType.lub_ad_type (List.map ~f:Expr.Typed.adlevel_of es) in
+    let derived =
+      match pattern with
+      | Var x -> String.Map.find_opt x bound
+      | Lit _ -> Some UnsizedType.DataOnly
+      | Promotion (inner, _, ad) ->
+          UnsizedType.lub_ad_type [ad; Expr.Typed.adlevel_of inner]
+      | Indexed (base, _) -> Some (Expr.Typed.adlevel_of base)
+      | FunApp (_, (_ :: _ as args)) -> lub args
+      | TernaryIf (e1, e2, e3) -> lub [e1; e2; e3]
+      | EAnd (e1, e2) | EOr (e1, e2) -> lub [e1; e2]
+      | FunApp (_, []) | TupleProjection _ -> None in
+    let adlevel =
+      match (e.meta.adlevel, derived) with
+      | AutoDiffable, Some DataOnly -> UnsizedType.DataOnly
+      | adlevel, _ -> adlevel in
+    {Expr.pattern; meta= {e.meta with adlevel}} in
+  let rec collect bound (s : Stmt.Located.t) =
+    match s.pattern with
+    | Assignment (lhs, _, rhs)
+      when Set.Poly.mem (Stmt.Helpers.lhs_variable lhs) !bound_actuals ->
+        String.Map.add bound
+          ~key:(Stmt.Helpers.lhs_variable lhs)
+          ~data:(Expr.Typed.adlevel_of (expr bound rhs))
+    | pattern -> Stmt.Pattern.fold (fun bound _ -> bound) collect bound pattern
+  in
+  let bound = collect String.Map.empty body in
+  let rec stmt (s : Stmt.Located.t) =
+    let pattern =
+      match Stmt.Pattern.map (expr bound) stmt s.pattern with
+      | Decl ({decl_id; _} as decl) when String.Map.mem decl_id bound ->
+          Stmt.Pattern.Decl
+            {decl with decl_adtype= String.Map.find decl_id bound}
+      | pattern -> pattern in
+    {s with pattern} in
+  stmt body
 
 (* Triple is (declaration list, statement list, return expression) *)
 let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
@@ -318,7 +373,7 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
               , { e with
                   pattern= FunApp (Fun_kind.UserDefined (fname, suffix), es) }
               )
-          | Some (rt, args, body, _) ->
+          | Some (rt, args, body, bind) ->
               let inline_return_name = gen_inline_var fname "return" in
               let handle =
                 handle_early_returns fname (Some inline_return_name) in
@@ -339,7 +394,8 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
                      variables introduced by inlining *)
                 , [ handle
                       (subst_args_stmt args es
-                         (replace_fresh_local_vars fname body)) ]
+                         (replace_fresh_local_vars fname body)
+                      |> if bind then refresh_inlined_adlevels else Fun.id) ]
                 , { pattern= Var inline_return_name
                   ; meta=
                       Expr.Typed.Meta.
@@ -460,11 +516,12 @@ let rec inline_function_statement propto adt fim Stmt.{pattern; meta} =
               | UserDefined (s, _) -> (
                   match String.Map.find_opt s fim with
                   | None -> NRFunApp (kind, es)
-                  | Some (_, args, b, _) ->
+                  | Some (_, args, b, bind) ->
                       let b = replace_fresh_local_vars s b in
                       let b = handle_early_returns s None b in
                       (subst_args_stmt args es
-                         {pattern= b; meta= Location_span.empty})
+                         {pattern= b; meta= Location_span.empty}
+                      |> if bind then refresh_inlined_adlevels else Fun.id)
                         .pattern))
         | Return e -> (
             match e with
@@ -556,6 +613,7 @@ let create_function_inline_map ~bind_repeated_scalar_args adt l =
 
 let function_inlining ?(bind_repeated_scalar_args = false)
     (mir : Program.Typed.t) =
+  bound_actuals := Set.Poly.empty;
   (* We add only the functions with a single definition to the inline map.
      Overloaded functions cannot be inlined. *)
   let can_inline =
