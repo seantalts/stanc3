@@ -537,14 +537,16 @@ let live_variables_transfer (never_kill : string Set.Poly.t)
       let gen = top_free_vars_stmt flowgraph_to_mir mir_node in
       let kill =
         match mir_node with
-        | Assignment ((LVariable x, []), _, _) | Decl {decl_id= x; _} ->
+        | Assignment ((LVariable x, []), _, _)
+         |Decl {decl_id= x; _}
+         |For {loopvar= x; _} ->
             Set.Poly.singleton x
         | TargetPE _ | JacobianPE _
          |NRFunApp (_, _)
          |Break | Continue | Return _ | Skip
          |IfElse (_, _, _)
          |While (_, _)
-         |For _ | Profile _ | Block _ | SList _
+         |Profile _ | Block _ | SList _
          |Assignment (_, _, _) ->
             Set.Poly.empty in
       transfer_gen_kill p gen (Set.Poly.diff kill never_kill)
@@ -809,6 +811,34 @@ let minimal_variables_fwd_transfer
     with type labels = int
      and type properties = string Set.Poly.t)
 
+(** The nodes of a flowgraph in reverse postorder of a depth-first search that
+    starts from its initial nodes. Nodes that search does not reach come first,
+    as they can flow into reachable nodes but not the other way around. *)
+let reverse_postorder (module F : FLOWGRAPH with type labels = int) =
+  let visited = Hashtbl.create (LabelMap.cardinal F.successors) in
+  let postorder = ref [] in
+  let visit root =
+    if not (Hashtbl.mem visited root) then (
+      Hashtbl.add visited ~key:root ~data:();
+      let stack = Stack.create () in
+      Stack.push
+        (root, Set.Poly.to_list (LabelMap.find root F.successors))
+        stack;
+      while not (Stack.is_empty stack) do
+        match Stack.pop stack with
+        | l, [] -> postorder := l :: !postorder
+        | l, succ :: rest ->
+            Stack.push (l, rest) stack;
+            if not (Hashtbl.mem visited succ) then (
+              Hashtbl.add visited ~key:succ ~data:();
+              Stack.push
+                (succ, Set.Poly.to_list (LabelMap.find succ F.successors))
+                stack)
+      done) in
+  Set.Poly.iter F.initials ~f:visit;
+  LabelMap.iter F.successors ~f:(fun ~key ~data:_ -> visit key);
+  Array.of_list !postorder
+
 (** The central definition of a monotone dataflow analysis framework. Given a
     compatible flowgraph, lattice and transfer function, we can run the mfp
     (maximal fixed point) algorithm, which computes a maximal fixed point (MFP)
@@ -827,28 +857,35 @@ let monotone_framework (type p) (module F : FLOWGRAPH with type labels = int)
 
     let mfp () =
       (* STEP 1: initialize data structures *)
-      let workstack = Stack.create () in
-      (* TODO: does the order matter a lot for efficiency here? *)
-      LabelMap.iter F.successors ~f:(fun ~key ~data ->
-          Set.Poly.iter data ~f:(fun succ -> Stack.push (key, succ) workstack));
-      let analysis_in = Hashtbl.create 32 in
+      let order = reverse_postorder (module F) in
+      let n = Array.length order in
+      let position = Hashtbl.create n in
+      Array.iteri order ~f:(fun i l -> Hashtbl.add position ~key:l ~data:i);
+      let analysis_in = Hashtbl.create n in
       LabelMap.iter
         ~f:(fun ~key:l ~data:_ ->
           Hashtbl.add analysis_in ~key:l
             ~data:(if Set.Poly.mem l F.initials then L.initial else L.bottom))
         F.successors;
+      (* The worklist holds node positions in [order], so that a node's
+         predecessors are processed before it wherever the graph allows.
+         Processing nodes in an arbitrary order instead can propagate a change
+         to the rest of the graph once per update of an earlier node. *)
+      let module Worklist = Stdlib.Set.Make (Int) in
+      let worklist = ref (Worklist.of_list (List.init ~len:n ~f:Fun.id)) in
       (* STEP 2: iterate *)
-      while Stack.length workstack <> 0 do
-        let l, l' = Stack.pop workstack in
-        let old_analysis_in_l' = Hashtbl.find analysis_in l' in
-        let new_analysis_in_l' =
+      while not (Worklist.is_empty !worklist) do
+        let i = Worklist.min_elt !worklist in
+        worklist := Worklist.remove i !worklist;
+        let l = order.(i) in
+        let analysis_out_l =
           T.transfer_function l (Hashtbl.find analysis_in l) in
-        if not (L.leq new_analysis_in_l' old_analysis_in_l') then
-          let () =
-            Hashtbl.add analysis_in ~key:l'
-              ~data:(L.lub old_analysis_in_l' new_analysis_in_l') in
-          Set.Poly.iter (LabelMap.find l' F.successors) ~f:(fun l'' ->
-              Stack.push (l', l'') workstack)
+        Set.Poly.iter (LabelMap.find l F.successors) ~f:(fun l' ->
+            let old_analysis_in_l' = Hashtbl.find analysis_in l' in
+            if not (L.leq analysis_out_l old_analysis_in_l') then (
+              Hashtbl.add analysis_in ~key:l'
+                ~data:(L.lub old_analysis_in_l' analysis_out_l);
+              worklist := Worklist.add (Hashtbl.find position l') !worklist))
       done;
       (* STEP 3: present final results *)
       let analysis_in_out =
