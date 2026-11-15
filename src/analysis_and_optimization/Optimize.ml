@@ -722,7 +722,12 @@ let create_function_inline_map ~bind_repeated_scalar_args adt l =
             String.Map.union accum m ~f:(fun _ v1 _ -> Some v1)) in
   List.fold_left l ~init:String.Map.empty ~f
 
-let function_inlining ?(bind_repeated_scalar_args = false)
+let resolve_inlined_program (mir : Program.Typed.t) =
+  { mir with
+    log_prob= resolve_inlined_adlevels mir.log_prob
+  ; reverse_mode_log_prob= resolve_inlined_adlevels mir.reverse_mode_log_prob }
+
+let function_inlining ?(bind_repeated_scalar_args = false) ?(resolve = true)
     (mir : Program.Typed.t) =
   bound_actuals := Set.Poly.empty;
   (* We add only the functions with a single definition to the inline map.
@@ -746,25 +751,29 @@ let function_inlining ?(bind_repeated_scalar_args = false)
         inline_function_statement true UnsizedType.DataOnly dataonly_inline_map
           s
         |> remove_inlined_call_markers) in
-  let autodiffable_inline_function_statements ?(resolve = false) block =
+  let autodiffable_inline_function_statements ?(keep_markers = false) block =
     let block =
       List.map
         ~f:
           (inline_function_statement true UnsizedType.AutoDiffable
              autodiff_inline_map)
         block in
-    if resolve then resolve_inlined_adlevels block
+    if keep_markers then block
     else List.map ~f:remove_inlined_call_markers block in
-  { mir with
-    transform_inits= autodiffable_inline_function_statements mir.transform_inits
-  ; unconstrain_array=
-      autodiffable_inline_function_statements mir.unconstrain_array
-  ; log_prob= autodiffable_inline_function_statements ~resolve:true mir.log_prob
-  ; reverse_mode_log_prob=
-      autodiffable_inline_function_statements ~resolve:true
-        mir.reverse_mode_log_prob
-  ; generate_quantities=
-      dataonly_inline_function_statements mir.generate_quantities }
+  let inlined =
+    { mir with
+      transform_inits=
+        autodiffable_inline_function_statements mir.transform_inits
+    ; unconstrain_array=
+        autodiffable_inline_function_statements mir.unconstrain_array
+    ; log_prob=
+        autodiffable_inline_function_statements ~keep_markers:true mir.log_prob
+    ; reverse_mode_log_prob=
+        autodiffable_inline_function_statements ~keep_markers:true
+          mir.reverse_mode_log_prob
+    ; generate_quantities=
+        dataonly_inline_function_statements mir.generate_quantities } in
+  if resolve then resolve_inlined_program inlined else inlined
 
 let rec contains_top_break_or_continue Stmt.{pattern; _} =
   match pattern with
@@ -1787,7 +1796,7 @@ let optimization_suite ?(settings = all_optimizations) mir =
       (* Book section A *)
       (* Book section B *)
       (* Book: Procedure integration *)
-      ( function_inlining ~bind_repeated_scalar_args:false
+      ( function_inlining ~bind_repeated_scalar_args:false ~resolve:true
       , settings.function_inlining )
       (* Book: Sparse conditional constant propagation *)
     ; (constant_propagation ~preserve_stability, settings.constant_propagation)

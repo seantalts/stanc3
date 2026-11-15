@@ -5275,3 +5275,49 @@ let%expect_test "demoted inlined containers stay arrays of structs" =
     (d AutoDiffable AoS)
     (inline_indices_return_sym1__ DataOnly AoS)
     |}]
+
+let%expect_test "deferred inlined-call resolution matches eager inlining" =
+  let model =
+    {|
+      functions {
+        real widen(real s) {
+          return 2 * s;
+        }
+        real twice(real x) {
+          return x + x;
+        }
+      }
+      data {
+        real s;
+      }
+      parameters {
+        real tau;
+      }
+      model {
+        tau ~ normal(twice(widen(s)), twice(tau));
+      }
+      |}
+  in
+  let with_rmlp (mir : Program.Typed.t) =
+    {mir with reverse_mode_log_prob= mir.log_prob} in
+  let eager =
+    reset_and_mir_of_string model
+    |> with_rmlp
+    |> function_inlining ~bind_repeated_scalar_args:true in
+  let marked =
+    reset_and_mir_of_string model
+    |> with_rmlp
+    |> function_inlining ~bind_repeated_scalar_args:true ~resolve:false in
+  let rec markers acc (s : Stmt.Located.t) =
+    let acc = if Option.is_some (inlined_call s) then acc + 1 else acc in
+    Stmt.Pattern.fold (fun acc _ -> acc) markers acc s.pattern in
+  let count block = List.fold_left ~init:0 ~f:markers block in
+  let deferred = resolve_inlined_program marked in
+  let show (mir : Program.Typed.t) = Fmt.str "%a" Program.Typed.pp mir in
+  print_s
+    [%sexp
+      (count marked.log_prob : int)
+    , (count marked.reverse_mode_log_prob : int)
+    , (count deferred.log_prob : int)
+    , (String.equal (show eager) (show deferred) : bool)];
+  [%expect {| (3 3 0 true) |}]

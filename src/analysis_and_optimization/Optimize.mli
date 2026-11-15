@@ -2,10 +2,24 @@
 open Middle
 
 val function_inlining :
-  ?bind_repeated_scalar_args:bool -> Program.Typed.t -> Program.Typed.t
+     ?bind_repeated_scalar_args:bool
+  -> ?resolve:bool
+  -> Program.Typed.t
+  -> Program.Typed.t
 (** Inline all functions except for ones with forward declarations (e.g.
     recursive functions, mutually recursive functions, and functions without a
-    definition *)
+    definition). With [~resolve:false], log_prob and reverse_mode_log_prob keep
+    a marker around each inlined call; [resolve_inlined_program] must run on the
+    result before any other inlining. *)
+
+val resolve_inlined_program : Program.Typed.t -> Program.Typed.t
+(** Give the inlined calls in log_prob and reverse_mode_log_prob the adlevels
+    CmdStan gives them, and remove their markers *)
+
+val inlined_call :
+     Stmt.Located.t
+  -> (string option * Expr.Typed.t list * Stmt.Located.t list) option
+(** The return variable, actuals and body of an inlined-call marker *)
 
 val static_loop_unrolling : Program.Typed.t -> Program.Typed.t
 (** Unroll all for-loops with constant bounds, as long as they do not contain
