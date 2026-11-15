@@ -3695,7 +3695,9 @@ Display all Stan math signatures exposed in the language
   cumulative_sum(array[] complex) => array[] complex
   determinant(matrix) => real
   diag_matrix(vector) => matrix
+  diag_matrix(row_vector) => matrix
   diag_matrix(complex_vector) => complex_matrix
+  diag_matrix(complex_row_vector) => complex_matrix
   diag_post_multiply(matrix, vector) => matrix
   diag_post_multiply(matrix, row_vector) => matrix
   diag_post_multiply(complex_matrix, complex_vector) => complex_matrix
@@ -19822,6 +19824,14 @@ Display all Stan math signatures exposed in the language
   softmax(row_vector) => row_vector
   softmax(array[] vector) => array[] vector
   softmax(array[] row_vector) => array[] row_vector
+  solve_sylvester(matrix, matrix, matrix) => complex_matrix
+  solve_sylvester(matrix, matrix, complex_matrix) => complex_matrix
+  solve_sylvester(matrix, complex_matrix, matrix) => complex_matrix
+  solve_sylvester(matrix, complex_matrix, complex_matrix) => complex_matrix
+  solve_sylvester(complex_matrix, matrix, matrix) => complex_matrix
+  solve_sylvester(complex_matrix, matrix, complex_matrix) => complex_matrix
+  solve_sylvester(complex_matrix, complex_matrix, matrix) => complex_matrix
+  solve_sylvester(complex_matrix, complex_matrix, complex_matrix) => complex_matrix
   sort_asc(vector) => vector
   sort_asc(row_vector) => row_vector
   sort_asc(array[] int) => array[] int
@@ -24291,3 +24301,4 @@ Display all Stan math signatures exposed in the language
   zeros_int_array(int) => array[] int
   zeros_row_vector(int) => row_vector
   zeros_vector(int) => vector
+  zip_index(matrix, array[] int, array[] int) => vector

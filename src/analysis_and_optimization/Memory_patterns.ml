@@ -93,28 +93,38 @@ let rec is_uni_eigen_loop_indexing in_loop (ut : UnsizedType.t)
     | _ -> false
   else false
 
+let check_mem_pattern_support signatures args =
+  let filteredmatches =
+    List.filter
+      ~f:(fun (x, _, _, _) ->
+        Frontend.SignatureMismatch.check_compatible_arguments_mod_conv x args
+        |> Result.is_ok)
+      signatures in
+  let is_soa (_, _, _, p) = p = Mem_pattern.SoA in
+  List.exists ~f:is_soa filteredmatches
+
+let query_operator_mem_pattern_support op args =
+  check_mem_pattern_support
+    (Stan_math_signatures.operator_to_stan_math_signatures op)
+    args
+
 let query_stan_math_mem_pattern_support (name : string)
     (args : UnsizedType.argumentlist) =
-  let open Stan_math_signatures in
-  if is_special_function_name name then false
+  if Stan_math_signatures.is_special_function_name name then false
   else
-    let name =
-      string_operator_to_stan_math_fns (Utils.stdlib_distribution_name name)
-    in
-    let namematches = lookup_stan_math_function name in
-    let filteredmatches =
-      List.filter
-        ~f:(fun (x, _, _, _) ->
-          Frontend.SignatureMismatch.check_compatible_arguments_mod_conv x args
-          |> Result.is_ok)
-        namematches in
-    let is_soa (_, _, _, p) = p = Mem_pattern.SoA in
-    List.exists ~f:is_soa filteredmatches
+    let signatures =
+      Stan_math_signatures.lookup_stan_math_function
+        (Utils.stdlib_distribution_name name) in
+    check_mem_pattern_support signatures args
 
 (** Validate whether a function can support SoA matrices *)
 let is_fun_soa_supported name exprs =
   let fun_args = List.map ~f:Expr.Typed.fun_arg exprs in
   query_stan_math_mem_pattern_support name fun_args
+
+let is_op_soa_supported op exprs =
+  let fun_args = List.map ~f:Expr.Typed.fun_arg exprs in
+  query_operator_mem_pattern_support op fun_args
 
 (** Query to find the initial set of objects that cannot be SoA. This is mostly
     recursing over expressions, with the exceptions being functions and indexing
@@ -198,7 +208,7 @@ and query_initial_demotable_funs (in_loop : bool) (stmt_linenum : int)
   let demoted_and_top_level_names =
     Set.Poly.union demoted_eigen_names top_level_eigen_names in
   match kind with
-  | Fun_kind.StanLib (name, (_ : bool Fun_kind.suffix), _) -> (
+  | Fun_kind.StanLib (name, _) | CompilerInternal (FnReturnSoA name) -> (
       match name with
       | "check_matching_dims" -> acc
       | name ->
@@ -211,6 +221,16 @@ and query_initial_demotable_funs (in_loop : bool) (stmt_linenum : int)
               ("Function " ^ name ^ " is not supported:")
               fail_names;
             Set.Poly.union acc demoted_and_top_level_names)
+  | Operator op ->
+      if is_op_soa_supported op exprs then
+        Set.Poly.union acc demoted_eigen_names
+      else
+        let fail_names =
+          concat_set_str (Set.Poly.inter acc top_level_eigen_names) in
+        user_warning_op SoA stmt_linenum
+          (Fmt.str "Operator %a is not supported:" Operator.pp op)
+          fail_names;
+        Set.Poly.union acc demoted_and_top_level_names
   | CompilerInternal (Internal_fun.FnMakeArray | FnMakeRowVec | FnMakeTuple) ->
       let fail_names =
         concat_set_str (Set.Poly.inter acc demoted_and_top_level_names) in
@@ -219,7 +239,7 @@ and query_initial_demotable_funs (in_loop : bool) (stmt_linenum : int)
         fail_names;
       Set.Poly.union acc demoted_and_top_level_names
   | CompilerInternal (_ : 'a Internal_fun.t) -> acc
-  | UserDefined ((_ : string), (_ : bool Fun_kind.suffix)) ->
+  | UserDefined ((_ : string), (_ : Fun_kind.suffix)) ->
       let fail_names =
         concat_set_str (Set.Poly.inter acc demoted_and_top_level_names) in
       user_warning_op SoA stmt_linenum "Used in user defined function:"
@@ -264,7 +284,7 @@ let rec extract_nonderived_admatrix_types
 and extract_nonderived_admatrix_types_fun (kind : 'a Fun_kind.t)
     (exprs : Expr.Typed.t list) =
   match kind with
-  | Fun_kind.StanLib (name, (_ : bool Fun_kind.suffix), _) -> (
+  | Fun_kind.StanLib (name, _) | CompilerInternal (FnReturnSoA name) -> (
       match name with
       | "check_matching_dims" -> []
       | "rep_vector" -> [(UnsizedType.AutoDiffable, UnsizedType.UVector)]
@@ -275,14 +295,14 @@ and extract_nonderived_admatrix_types_fun (kind : 'a Fun_kind.t)
              | _ -> false ->
           [(UnsizedType.AutoDiffable, UnsizedType.UMatrix)]
       | _ -> List.concat_map ~f:extract_nonderived_admatrix_types exprs)
+  | Operator _ -> List.concat_map ~f:extract_nonderived_admatrix_types exprs
   (* While not "true", we need to tell the optimizer these are danger
      functions *)
   | CompilerInternal Internal_fun.FnMakeArray ->
       [(AutoDiffable, UReal); (DataOnly, UArray UReal)]
   | CompilerInternal Internal_fun.FnMakeRowVec ->
       [(AutoDiffable, UReal); (DataOnly, URowVector)]
-  | CompilerInternal (_ : 'a Internal_fun.t) -> []
-  | UserDefined ((_ : string), (_ : bool Fun_kind.suffix)) -> []
+  | CompilerInternal _ | UserDefined _ -> []
 
 (** Checks if a list of types contains at least on ad matrix or if everything is
     derived from data *)
@@ -370,7 +390,9 @@ let rec query_initial_demotable_stmt (in_loop : bool) (acc : string Set.Poly.t)
           let non_supported_func_name =
             match rhs.pattern with
             | FunApp (UserDefined (name, _), _) -> Some name
-            | FunApp (StanLib (name, _, _), exprs)
+            | FunApp
+                ( (StanLib (name, _) | CompilerInternal (FnReturnSoA name))
+                , exprs )
               when not
                      (query_stan_math_mem_pattern_support name
                         (List.map ~f:Expr.Typed.fun_arg exprs)) ->
@@ -445,18 +467,22 @@ let rec query_initial_demotable_stmt (in_loop : bool) (acc : string Set.Poly.t)
       Set.Poly.union_list
         [ acc; query_expr acc predicate
         ; query_initial_demotable_stmt true acc body ]
-  | Decl {decl_type= Type.Sized st; decl_id; initialize; _} ->
-      let complex_name =
-        if SizedType.is_complex_type st then (
-          user_warning_op SoA linenum "Complex-valued types cannot be SoA:"
-            decl_id;
-          Set.Poly.singleton decl_id)
-        else Set.Poly.empty in
-      let init_names =
-        match initialize with
-        | Assign e -> query_expr acc e
-        | _ -> Set.Poly.empty in
-      Set.Poly.union acc (Set.Poly.union complex_name init_names)
+  | Decl {decl_type= Type.Sized st; decl_id; initialize; decl_adtype} ->
+      if not (UnsizedType.is_autodifftype decl_adtype) then
+        (* generated e.g. by inlining a `data` function argument *)
+        Set.Poly.singleton decl_id
+      else
+        let complex_name =
+          if SizedType.is_complex_type st then (
+            user_warning_op SoA linenum "Complex-valued types cannot be SoA:"
+              decl_id;
+            Set.Poly.singleton decl_id)
+          else Set.Poly.empty in
+        let init_names =
+          match initialize with
+          | Assign e -> query_expr acc e
+          | _ -> Set.Poly.empty in
+        Set.Poly.union acc (Set.Poly.union complex_name init_names)
   | Skip | Break | Continue | Decl _ -> acc
 
 (** Look through a statement to see whether the objects used in it need to be
@@ -508,6 +534,15 @@ let query_demotable_stmt (aos_exits : string Set.Poly.t)
   (* All other statements do not need logic here *)
   | _ -> Set.Poly.empty
 
+let maybe_soa_matrix_builder kind =
+  match kind with
+  | Fun_kind.StanLib
+      ( (( "rep_matrix" | "rep_vector" | "rep_row_vector" | "append_row"
+         | "append_col" ) as name)
+      , _ ) ->
+      Fun_kind.CompilerInternal (FnReturnSoA name)
+  | _ -> kind
+
 (** Modify a function and it's subexpressions from SoA <-> AoS and vice versa.
     This performs demotion for sub expressions recursively. The top level
     expression and it's sub expressions are demoted to SoA if
@@ -529,14 +564,30 @@ let rec modify_kind ?force_demotion:(force = false)
   let is_all_in_list =
     is_nonzero_subset ~set:modifiable_set ~subset:expr_names in
   match kind with
-  | Fun_kind.StanLib (name, sfx, (_ : Mem_pattern.t)) ->
+  | Fun_kind.StanLib (name, _) ->
       if is_all_in_list || (not (is_fun_soa_supported name exprs)) || force then
         (* Force demotion of all subexprs *)
         let exprs' =
           List.map ~f:(modify_expr ~force_demotion:true expr_names) exprs in
-        (Fun_kind.StanLib (name, sfx, Mem_pattern.AoS), exprs')
+        (kind, exprs')
       else
-        ( Fun_kind.StanLib (name, sfx, SoA)
+        let kind = maybe_soa_matrix_builder kind in
+        ( kind
+        , List.map ~f:(modify_expr ~force_demotion:false modifiable_set) exprs
+        )
+  | CompilerInternal (FnReturnSoA name)
+    when is_all_in_list || (not (is_fun_soa_supported name exprs)) || force ->
+      let exprs' =
+        List.map ~f:(modify_expr ~force_demotion:true expr_names) exprs in
+      (StanLib (name, FnPlain), exprs')
+  | Operator op ->
+      if is_all_in_list || (not (is_op_soa_supported op exprs)) || force then
+        (* Force demotion of all subexprs *)
+        let exprs' =
+          List.map ~f:(modify_expr ~force_demotion:true expr_names) exprs in
+        (Operator op, exprs')
+      else
+        ( Operator op
         , List.map ~f:(modify_expr ~force_demotion:false modifiable_set) exprs
         )
   | UserDefined _ as udf ->

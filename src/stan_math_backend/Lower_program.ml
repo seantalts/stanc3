@@ -38,7 +38,8 @@ let lower_data_decl (vident, ut) : defn =
     else vident in
   GlobalVariableDefn
     (lower_unsized_decl data_vident ut
-       (UnsizedType.fill_adtype_for_type DataOnly ut))
+       (UnsizedType.fill_adtype_for_type DataOnly ut)
+       Uninit)
 
 (** Create maps of Eigen types *)
 let lower_map_decl (vident, ut) : defn =
@@ -283,6 +284,37 @@ let gen_write_array {Program.prog_name; generate_quantities; _} =
          (intro @ Stmts.rethrow_located (lower_statements generate_quantities))
        ~cv_qualifiers:[Const] ())
 
+let write_tdata_json {Program.prepare_data; input_vars; _} =
+  let data_ids = String.Set.of_list (List.map ~f:fst3 input_vars) in
+  let tdata_ids =
+    List.filter_map prepare_data ~f:(fun s ->
+        match s.Stmt.pattern with
+        | Decl {decl_id; _}
+          when Utils.is_user_ident decl_id
+               && not (String.Set.mem decl_id data_ids) ->
+            Some decl_id
+        | _ -> None) in
+  let open Cpp.DSL in
+  let stream_name = "json_stream__" in
+  let stream_ptr = Var stream_name in
+  let stream = Deref stream_ptr in
+  let write_object entries =
+    let write_data_item i m =
+      (if i > 0 then [stream <<: literal_string ",\n"] else [])
+      @ [ Expression
+            (fun_call "stan::json::write_key" [stream_ptr; literal_string m])
+        ; Expression
+            (fun_call "stan::json::write_json_value" [stream_ptr; Var m]) ]
+    in
+    (stream <<: literal_string "{")
+    :: List.concat_mapi ~f:write_data_item entries
+    @ [stream <<: literal_string "}"] in
+  FunDef
+    (make_fun_defn ~inline:true ~return_type:Void
+       ~name:"write_transformed_data_json"
+       ~args:[(Pointer Types.ostream, stream_name)]
+       ~body:(write_object tdata_ids) ~cv_qualifiers:[Const] ())
+
 let gen_transform_inits_impl {Program.transform_inits; output_vars; _} =
   let templates =
     [Typename "VecVar"; Require ("stan::require_vector_t", ["VecVar"])] in
@@ -444,7 +476,7 @@ let gen_get_dims {Program.output_vars; _} =
 
 let rec gen_indexing_loop ?(index_ids = []) iteratee dims gen_body =
   let iter d gen_body =
-    let loopvar, gensym_exit = Common.Gensym.enter () in
+    let loopvar, gensym_exit = Common.Gensym.enter ~prefix:"idx" in
     let forloop =
       Stmts.fori loopvar
         (lower_expr Expr.Helpers.loop_bottom)
@@ -777,7 +809,7 @@ let lower_model_public p =
     ; (* Begin metadata methods *) gen_get_param_names p
     ; (* Post-data metadata methods *) gen_get_dims p
     ; gen_constrained_param_names p; gen_unconstrained_param_names p
-    ; gen_constrained_types p; gen_unconstrained_types p ]
+    ; gen_constrained_types p; gen_unconstrained_types p; write_tdata_json p ]
   (* Boilerplate *)
   @ gen_overloads p
 
@@ -929,12 +961,13 @@ module Testing = struct
     |> print_endline;
     [%expect
       {|
-          for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
-            param_names__.emplace_back(std::string() + "foo" + '.' +
-              std::to_string(sym1__) + '.' + "real");
-            param_names__.emplace_back(std::string() + "foo" + '.' +
-              std::to_string(sym1__) + '.' + "imag");
-          } |}]
+      for (int idx1__ = 1; idx1__ <= N; ++idx1__) {
+        param_names__.emplace_back(std::string() + "foo" + '.' +
+          std::to_string(idx1__) + '.' + "real");
+        param_names__.emplace_back(std::string() + "foo" + '.' +
+          std::to_string(idx1__) + '.' + "imag");
+      }
+      |}]
 
   let%expect_test "tuple names" =
     gen_param_names
@@ -947,10 +980,11 @@ module Testing = struct
     [%expect
       {|
       param_names__.emplace_back(std::string() + "tuple" + ':' + std::to_string(1));
-      for (int sym1__ = 1; sym1__ <= nested; ++sym1__) {
+      for (int idx1__ = 1; idx1__ <= nested; ++idx1__) {
         param_names__.emplace_back(std::string() + "tuple" + ':' +
-          std::to_string(2) + '.' + std::to_string(sym1__));
-      } |}]
+          std::to_string(2) + '.' + std::to_string(idx1__));
+      }
+      |}]
 
   let%expect_test "array of tuple names" =
     gen_param_names
@@ -964,13 +998,14 @@ module Testing = struct
     |> print_endline;
     [%expect
       {|
-        for (int sym1__ = 1; sym1__ <= N; ++sym1__) {
+      for (int idx1__ = 1; idx1__ <= N; ++idx1__) {
+        param_names__.emplace_back(std::string() + "arr_tuple" + '.' +
+          std::to_string(idx1__) + ':' + std::to_string(1));
+        for (int idx2__ = 1; idx2__ <= nested; ++idx2__) {
           param_names__.emplace_back(std::string() + "arr_tuple" + '.' +
-            std::to_string(sym1__) + ':' + std::to_string(1));
-          for (int sym2__ = 1; sym2__ <= nested; ++sym2__) {
-            param_names__.emplace_back(std::string() + "arr_tuple" + '.' +
-              std::to_string(sym1__) + ':' + std::to_string(2) + '.' +
-              std::to_string(sym2__));
-          }
-        } |}]
+            std::to_string(idx1__) + ':' + std::to_string(2) + '.' +
+            std::to_string(idx2__));
+        }
+      }
+      |}]
 end

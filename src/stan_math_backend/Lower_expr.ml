@@ -9,33 +9,26 @@ let stan_namespace_qualify f =
   else "stan::math::" ^ f
 
 let fn_renames =
-  List.map
-    ~f:(fun (k, v) -> (Internal_fun.to_string k, v))
-    [ (Internal_fun.FnLength, "stan::math::size")
-    ; (FnNegInf, "stan::math::negative_infinity")
-    ; (FnResizeToMatch, "stan::math::resize_to_match")
-    ; (FnNaN, "std::numeric_limits<double>::quiet_NaN") ]
-  @ [ ("lmultiply", "stan::math::multiply_log")
-    ; ("lchoose", "stan::math::binomial_coefficient_log")
-    ; ("std_normal_qf", "stan::math::inv_Phi")
-    ; ("integrate_ode", "stan::math::integrate_ode_rk45")
-      (* constraints -- originally internal functions, may be worth renaming
-         now *)
-    ; ("cholesky_factor_corr_jacobian", "stan::math::cholesky_corr_constrain")
-    ; ("cholesky_factor_corr_constrain", "stan::math::cholesky_corr_constrain")
-    ; ("cholesky_factor_corr_unconstrain", "stan::math::cholesky_corr_free")
-    ; ("cholesky_factor_cov_jacobian", "stan::math::cholesky_factor_constrain")
-    ; ("cholesky_factor_cov_constrain", "stan::math::cholesky_factor_constrain")
-    ; ("cholesky_factor_cov_unconstrain", "stan::math::cholesky_factor_free")
-    ; ("lower_bound_jacobian", "stan::math::lb_constrain")
-    ; ("lower_bound_constrain", "stan::math::lb_constrain")
-    ; ("lower_bound_unconstrain", "stan::math::lb_free")
-    ; ("upper_bound_jacobian", "stan::math::ub_constrain")
-    ; ("upper_bound_constrain", "stan::math::ub_constrain")
-    ; ("upper_bound_unconstrain", "stan::math::ub_free")
-    ; ("lower_upper_bound_jacobian", "stan::math::lub_constrain")
-    ; ("lower_upper_bound_constrain", "stan::math::lub_constrain")
-    ; ("lower_upper_bound_unconstrain", "stan::math::lub_free") ]
+  [ ("target", "get_lp"); ("lchoose", "binomial_coefficient_log")
+  ; ("std_normal_qf", "inv_Phi")
+  ; ("integrate_ode", "integrate_ode_rk45")
+    (* constraints -- originally internal functions, may be worth renaming
+       now *); ("cholesky_factor_corr_jacobian", "cholesky_corr_constrain")
+  ; ("cholesky_factor_corr_constrain", "cholesky_corr_constrain")
+  ; ("cholesky_factor_corr_unconstrain", "cholesky_corr_free")
+  ; ("cholesky_factor_cov_jacobian", "cholesky_factor_constrain")
+  ; ("cholesky_factor_cov_constrain", "cholesky_factor_constrain")
+  ; ("cholesky_factor_cov_unconstrain", "cholesky_factor_free")
+  ; ("lower_bound_jacobian", "lb_constrain")
+  ; ("lower_bound_constrain", "lb_constrain")
+  ; ("lower_bound_unconstrain", "lb_free")
+  ; ("upper_bound_jacobian", "ub_constrain")
+  ; ("upper_bound_constrain", "ub_constrain")
+  ; ("upper_bound_unconstrain", "ub_free")
+  ; ("lower_upper_bound_jacobian", "lub_constrain")
+  ; ("lower_upper_bound_constrain", "lub_constrain")
+  ; ("lower_upper_bound_unconstrain", "lub_free") ]
+  |> List.map ~f:(fun (prev, renamed) -> (prev, stan_namespace_qualify renamed))
   |> String.Map.of_list
 
 let constraint_to_string = function
@@ -122,7 +115,7 @@ let suffix_args udf = function
   | FnTarget -> ["lp__"; "lp_accum__"]
   | FnJacobian when udf -> ["lp__"; "lp_accum__"]
   | FnJacobian -> ["lp__"]
-  | FnPlain | FnLpdf _ | FnLpmf _ -> []
+  | FnPlain | FnDist _ -> []
 
 let rec stantype_prim = function
   | UnsizedType.UInt -> Int
@@ -131,8 +124,8 @@ let rec stantype_prim = function
 
 let templates udf suffix =
   match suffix with
-  | Fun_kind.FnLpdf true | FnLpmf true -> [TemplateType "propto__"]
-  | FnLpdf false | FnLpmf false -> [TemplateType "false"]
+  | Fun_kind.FnDist (_, Fun_kind.Unnormalized) -> [TemplateType "propto__"]
+  | FnDist (_, Normalized) -> [TemplateType "false"]
   | FnTarget when udf -> [TemplateType "propto__"]
   | FnJacobian -> [TemplateType "jacobian__"]
   | _ -> []
@@ -212,7 +205,7 @@ let rec lower_logical_op op e1 e2 =
   let prim e = Exprs.fun_call "stan::math::primitive_value" [lower_expr e] in
   Parens (BinOp (prim e1, op, prim e2))
 
-and lower_binary_fun f es = Exprs.fun_call f (lower_exprs es)
+and lower_fun_call f es = Exprs.fun_call f (lower_exprs es)
 
 and vector_literal ?(column = false) scalar es =
   let open Cpp.DSL in
@@ -224,26 +217,19 @@ and vector_literal ?(column = false) scalar es =
     let values = lower_exprs es in
     (vector << values).@!("finished")
 
-and read_data ut es =
-  let val_method =
-    match ut with
-    | UnsizedType.UArray UInt -> "vals_i"
-    | UArray UReal -> "vals_r"
-    | UArray UComplex -> "vals_c"
-    | UInt | UReal | UComplex | UVector | URowVector | UMatrix | UTuple _
-     |UComplexMatrix | UComplexRowVector | UComplexVector | UArray _ | UFun _
-     |UMathLibraryFunction ->
-        Common.ICE.(
-          internal_errorf "Can't ReadData of %t" [UnsizedType.pp $ ut])
-        [@coverage off] in
-  let open Cpp.DSL in
-  let data_context = Var "context__" in
-  data_context.@?(val_method, [lower_expr (List.hd_exn es)])
-
 and lower_binary_op op fn es =
   if is_scalar (first es) && is_scalar (second es) then
     Parens (BinOp (lower_expr (first es), op, lower_expr (second es)))
-  else lower_binary_fun fn es
+  else lower_fun_call fn es
+
+and lower_operator = function
+  | Operator.Plus -> Some Add
+  | Minus -> Some Subtract
+  | Times | EltTimes -> Some Multiply
+  | Divide | IntDivide | EltDivide -> Some Divide
+  | And -> Some And
+  | Or -> Some Or
+  | _ -> None
 
 and lower_operator_app op es_in =
   let remove_basic_promotion (e : 'a Expr.t) =
@@ -253,25 +239,24 @@ and lower_operator_app op es_in =
     if List.for_all es_in ~f:is_scalar then
       List.map ~f:remove_basic_promotion es_in
     else es_in in
+  let fn =
+    stan_namespace_qualify
+      (List.hd_exn (Stan_math_signatures.operator_to_stan_math_fns op)) in
   match op with
-  | Operator.Plus -> lower_binary_op Add "stan::math::add" es
+  | Operator.PPlus -> lower_expr (first es)
   | PMinus ->
       if is_scalar (first es) then PMinus (lower_expr (first es))
-      else Exprs.fun_call "stan::math::minus" [lower_expr (first es)]
-  | PPlus -> lower_expr (first es)
+      else lower_fun_call fn es
   | Transpose ->
       if is_scalar (first es) then lower_expr (first es)
-      else Exprs.fun_call "stan::math::transpose" [lower_expr (first es)]
-  | PNot -> Exprs.fun_call "stan::math::logical_negation" [lower_expr (first es)]
-  | Minus -> lower_binary_op Subtract "stan::math::subtract" es
-  | Times -> lower_binary_op Multiply "stan::math::multiply" es
-  | Divide | IntDivide ->
-      (* XXX: This conditional is probably a sign that we need to rethink how we
-         store Operators in the MIR *)
+      else lower_fun_call fn es
+  | Divide ->
+      (* XXX: This conditional is a sign that we might want to reconsider
+         overloading the division operator but not the division function *)
       if
         is_matrix (second es)
         && (is_matrix (first es) || is_row_vector (first es))
-      then lower_binary_fun "stan::math::mdivide_right" es
+      then lower_fun_call "stan::math::mdivide_right" es
       else
         let f e = Expr.Typed.type_of e = UInt in
         (* NB: Not stripping promotions due to semantics of int / int *)
@@ -279,49 +264,16 @@ and lower_operator_app op es_in =
           if List.for_all ~f es && not (List.for_all ~f es_in) then es_in
           else es in
         lower_binary_op Divide "stan::math::divide" es'
-  | Modulo -> lower_binary_fun "stan::math::modulus" es
-  | LDivide -> lower_binary_fun "stan::math::mdivide_left" es
+  | Plus | Minus | Times | IntDivide | EltTimes | EltDivide | PNot | Modulo
+   |LDivide | Pow | EltPow | Equals | NEquals | Less | Leq | Greater | Geq -> (
+      match lower_operator op with
+      | Some op -> lower_binary_op op fn es
+      | None -> lower_fun_call fn es)
   | And | Or ->
       Common.ICE.internal_error
         "And/Or should have been converted to an expression" [@coverage off]
-  | EltTimes -> lower_binary_op Multiply "stan::math::elt_multiply" es
-  | EltDivide -> lower_binary_op Divide "stan::math::elt_divide" es
-  | Pow -> lower_binary_fun "stan::math::pow" es
-  | EltPow -> lower_binary_fun "stan::math::pow" es
-  | Equals -> lower_binary_fun "stan::math::logical_eq" es
-  | NEquals -> lower_binary_fun "stan::math::logical_neq" es
-  | Less -> lower_binary_fun "stan::math::logical_lt" es
-  | Leq -> lower_binary_fun "stan::math::logical_lte" es
-  | Greater -> lower_binary_fun "stan::math::logical_gt" es
-  | Geq -> lower_binary_fun "stan::math::logical_gte" es
 
-and lower_misc_special_math_app (f : string) (mem_pattern : Mem_pattern.t)
-    (ret_type : UnsizedType.returntype option) =
-  match f with
-  | "target" ->
-      Some
-        (fun _ ->
-          Exprs.fun_call "stan::math::get_lp" [Var "lp__"; Var "lp_accum__"])
-  | "rep_matrix" | "rep_vector" | "rep_row_vector" | "append_row" | "append_col"
-    when mem_pattern = Mem_pattern.SoA -> (
-      let is_autodiffable Expr.{meta= Expr.Typed.Meta.{adlevel; _}; _} =
-        adlevel = UnsizedType.AutoDiffable in
-      match ret_type with
-      | Some (UnsizedType.ReturnType t) ->
-          Some
-            (fun es ->
-              if List.exists ~f:is_autodiffable es then
-                Exprs.templated_fun_call (stan_namespace_qualify f)
-                  [ lower_possibly_var_decl
-                      (UnsizedType.fill_adtype_for_type AutoDiffable t)
-                      t mem_pattern ]
-                  (lower_exprs es)
-              else Exprs.fun_call (stan_namespace_qualify f) (lower_exprs es))
-      | Some Void -> None
-      | None -> None)
-  | _ -> None
-
-and lower_functionals fname suffix es mem_pattern =
+and lower_functionals fname suffix es =
   let contains_hof_vars = function
     | {Expr.pattern= Var _; meta= {Expr.Typed.Meta.type_= UFun _; _}} -> true
     | _ -> false in
@@ -337,8 +289,7 @@ and lower_functionals fname suffix es mem_pattern =
                 FunApp
                   ( StanLib
                       ( name ^ functor_suffix_select (functor_type fname)
-                      , FnPlain
-                      , mem_pattern )
+                      , FnPlain )
                   , [] ) }
         | e -> e in
       let converted_es = List.map ~f:convert_hof_vars es in
@@ -363,7 +314,7 @@ and lower_functionals fname suffix es mem_pattern =
           ->
             (fname, f :: y0 :: t0 :: ts :: theta :: x :: x_int :: msgs :: tl)
         | ( x
-          , {pattern= FunApp ((UserDefined (f, _) | StanLib (f, _, _)), _); _}
+          , {pattern= FunApp ((UserDefined (f, _) | StanLib (f, _)), _); _}
             :: grainsize :: container :: tl )
           when Stan_math_signatures.is_reduce_sum_fn x ->
             let chop_functor_suffix =
@@ -389,7 +340,7 @@ and lower_functionals fname suffix es mem_pattern =
             (fname, hd @ (msgs :: tl))
         | ( "map_rect"
           , {pattern= Lit (Int, id); _}
-            :: {pattern= FunApp ((UserDefined (f, _) | StanLib (f, _, _)), _); _}
+            :: {pattern= FunApp ((UserDefined (f, _) | StanLib (f, _)), _); _}
             :: tl ) ->
             (Fmt.str "%s<%s, %s>" fname id f, tl @ [msgs])
         | _, args ->
@@ -403,8 +354,7 @@ and lower_functionals fname suffix es mem_pattern =
       Exprs.templated_fun_call fname templates (lower_exprs args) in
     Some lower_hov
 
-and lower_fun_app suffix fname es mem_pattern
-    (ret_type : UnsizedType.returntype option) =
+and lower_fun_app suffix fname es =
   let fname =
     Option.value (String.Map.find_opt fname fn_renames) ~default:fname in
   let fname =
@@ -413,12 +363,7 @@ and lower_fun_app suffix fname es mem_pattern
     | Some (f, "jacobian") -> f ^ "_constrain"
     | Some (f, "unconstrain") -> f ^ "_free"
     | _ -> fname in
-  let special_options =
-    [ Option.map ~f:lower_operator_app (Operator.of_string_opt fname)
-    ; lower_misc_special_math_app fname mem_pattern ret_type
-    ; lower_functionals fname suffix es mem_pattern ]
-    |> List.filter_map ~f:Fun.id |> List.hd in
-  match special_options with
+  match lower_functionals fname suffix es with
   | Some s -> s es
   | None ->
       let fname = stan_namespace_qualify fname in
@@ -468,7 +413,6 @@ and lower_compiler_internal ad ut f es =
           Common.ICE.(
             internal_errorf "Unexpected type for row vector literal %t"
               [UnsizedType.pp $ ut]) [@coverage off])
-  | FnReadData -> read_data ut es
   | FnReadDeserializer ->
       deserializer.@<>(( "read"
                        , [lower_unsizedtype_local AutoDiffable ut]
@@ -489,13 +433,36 @@ and lower_compiler_internal ad ut f es =
                            , [ lower_possibly_var_decl AutoDiffable ut
                                  mem_pattern; TemplateType "jacobian__" ]
                            , lower_exprs args )))
-  | FnDeepCopy ->
-      lower_fun_app Fun_kind.FnPlain "stan::model::deep_copy" es Mem_pattern.AoS
-        (Some UnsizedType.Void)
-  | FnMakeTuple -> fun_call "std::forward_as_tuple" (lower_exprs es)
-  | _ ->
-      lower_fun_app FnPlain (Internal_fun.to_string f) es Mem_pattern.AoS
-        (Some UnsizedType.Void)
+  | FnDeepCopy -> lower_fun_call "stan::model::deep_copy" es
+  | FnToRef ->
+      let container = first es in
+      if UnsizedType.is_eigen_type container.meta.type_ then
+        lower_fun_call "stan::math::to_ref" [container]
+      else lower_expr container
+  | FnMakeTuple -> lower_fun_call "std::forward_as_tuple" es
+  | FnLength -> lower_fun_call "stan::math::size" es
+  | FnResizeToMatch -> lower_fun_call "stan::math::resize_to_match" es
+  | FnNegInf -> fun_call "stan::math::negative_infinity" []
+  | FnNaN -> fun_call "std::numeric_limits<double>::quiet_NaN" []
+  | FnReturnSoA name ->
+      let name = stan_namespace_qualify name in
+      let is_autodiffable Expr.{meta= Expr.Typed.Meta.{adlevel; _}; _} =
+        adlevel = UnsizedType.AutoDiffable in
+      if List.exists ~f:is_autodiffable es then
+        Exprs.templated_fun_call name
+          [ lower_possibly_var_decl
+              (UnsizedType.fill_adtype_for_type AutoDiffable ut)
+              ut SoA ]
+          (lower_exprs es)
+      else lower_fun_call name es
+  | FnReadData | FnWriteParam _ | FnValidateSize | FnValidateSizePositive
+   |FnValidateSizeUnitVector | FnCheck _ | FnPrint | FnReject | FnFatalError
+   |FnReadWriteEventsOpenCL _ ->
+      Common.ICE.(
+        internal_errorf
+          "Tried to compile statement-only internal function %t in expression \
+           context!"
+          [Internal_fun.pp Expr.Typed.pp $ f]) [@coverage off]
 
 and lower_index = function
   | Index.All -> Exprs.fun_call "stan::model::index_omni" []
@@ -556,36 +523,29 @@ and lower_expr (Expr.{pattern; meta} : Expr.Typed.t) : Cpp.expr =
         else lower_expr e in
       Parens (TernaryIf (maybe_eval ec, maybe_eval et, maybe_eval ef))
   | FunApp
-      ( StanLib (op, _, _)
+      ( Operator Transpose
       , [ { meta= {type_= URowVector; _}
-          ; pattern= FunApp (CompilerInternal FnMakeRowVec, es) } ] )
-    when Operator.(Some Transpose = of_string_opt op) ->
+          ; pattern= FunApp (CompilerInternal FnMakeRowVec, es) } ] ) ->
       let st = local_scalar UVector (promote_adtype es) in
       vector_literal ~column:true st es
   | FunApp
-      ( StanLib (op, _, _)
+      ( Operator Transpose
       , [ { meta= {type_= UComplexRowVector; _}
-          ; pattern= FunApp (CompilerInternal FnMakeRowVec, es) } ] )
-    when Operator.(Some Transpose = of_string_opt op) ->
+          ; pattern= FunApp (CompilerInternal FnMakeRowVec, es) } ] ) ->
       let st = Types.complex (local_scalar UComplexVector (promote_adtype es)) in
       vector_literal ~column:true st es
+  | FunApp (Operator op, es) -> lower_operator_app op es
   | FunApp (CompilerInternal f, es) ->
       lower_compiler_internal meta.adlevel meta.type_ f es
-  | FunApp (StanLib (f, suffix, mem_pattern), es) ->
-      let ret_type = Some (UnsizedType.ReturnType meta.type_) in
-      lower_fun_app suffix f es mem_pattern ret_type
+  | FunApp (StanLib (f, suffix), es) -> lower_fun_app suffix f es
   | FunApp (UserDefined (f, suffix), es) -> lower_user_defined_fun f suffix es
   | Indexed (e, []) -> lower_expr e
-  | Indexed (e, idx) -> (
-      match e.pattern with
-      | FunApp (CompilerInternal FnReadData, _) ->
-          lower_indexed_simple (lower_expr e) idx
-      | _
-        when List.for_all ~f:dont_need_range_check idx
-             && not (UnsizedType.is_indexing_matrix (Expr.Typed.type_of e, idx))
-        ->
-          lower_indexed_simple (lower_expr e) idx
-      | _ -> lower_indexed e idx (Fmt.to_to_string Expr.Typed.pp e))
+  | Indexed (e, idx) ->
+      if
+        List.for_all ~f:dont_need_range_check idx
+        && not (UnsizedType.is_indexing_matrix (Expr.Typed.type_of e, idx))
+      then lower_indexed_simple (lower_expr e) idx
+      else lower_indexed e idx (Fmt.to_to_string Expr.Typed.pp e)
   | TupleProjection (t, ix) -> tuple_get (ix - 1) (lower_expr t)
 
 and lower_exprs es = List.map ~f:lower_expr es
@@ -619,21 +579,20 @@ module Testing = struct
     [%expect {| 112 |}]
 
   let%expect_test "pp_expr5" =
-    print_string (pp_unlocated (FunApp (StanLib ("pi", FnPlain, AoS), [])));
+    print_string (pp_unlocated (FunApp (StanLib ("pi", FnPlain), [])));
     [%expect {| stan::math::pi() |}]
 
   let%expect_test "pp_expr6" =
     print_string
       (pp_unlocated
-         (FunApp
-            (StanLib ("sqrt", FnPlain, AoS), [dummy_locate (Lit (Int, "123"))])));
+         (FunApp (StanLib ("sqrt", FnPlain), [dummy_locate (Lit (Int, "123"))])));
     [%expect {| stan::math::sqrt(123) |}]
 
   let%expect_test "pp_expr7" =
     print_string
       (pp_unlocated
          (FunApp
-            ( StanLib ("atan", FnPlain, AoS)
+            ( StanLib ("atan", FnPlain)
             , [dummy_locate (Lit (Int, "123")); dummy_locate (Lit (Real, "1.2"))]
             )));
     [%expect {| stan::math::atan(123, 1.2) |}]

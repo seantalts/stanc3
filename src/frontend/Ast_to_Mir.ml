@@ -4,7 +4,7 @@ open Middle
 let trans_fn_kind kind name =
   let fname = Utils.stdlib_distribution_name name in
   match kind with
-  | Ast.StanLib suffix -> Fun_kind.StanLib (fname, suffix, AoS)
+  | Ast.StanLib suffix -> Fun_kind.StanLib (fname, suffix)
   | UserDefined suffix -> UserDefined (fname, suffix)
 
 let without_underscores s =
@@ -35,8 +35,7 @@ let rec op_to_funapp op args type_ =
     Ast.expr_ad_lub args |> Option.get
     (* correctness inherited from typechecking *) in
   Expr.
-    { pattern=
-        FunApp (StanLib (Operator.to_string op, FnPlain, AoS), trans_exprs args)
+    { pattern= FunApp (Operator op, trans_exprs args)
     ; meta= Expr.Typed.Meta.create ~type_ ~adlevel ~loc () }
 
 and trans_expr {Ast.expr; Ast.emeta} =
@@ -63,7 +62,7 @@ and trans_expr {Ast.expr; Ast.emeta} =
   | FunApp (fn_kind, {name; _}, args) | CondDistApp (fn_kind, {name; _}, args)
     ->
       FunApp (trans_fn_kind fn_kind name, trans_exprs args) |> ewrap
-  | GetTarget -> FunApp (StanLib ("target", FnTarget, AoS), []) |> ewrap
+  | GetTarget -> FunApp (StanLib ("target", FnTarget), []) |> ewrap
   | ArrayExpr eles ->
       FunApp (CompilerInternal FnMakeArray, trans_exprs eles) |> ewrap
   | RowVectorExpr eles ->
@@ -254,7 +253,7 @@ let same_shape decl_id decl_var id var meta =
     [ Stmt.
         { pattern=
             NRFunApp
-              ( StanLib ("check_matching_dims", FnPlain, AoS)
+              ( StanLib ("check_matching_dims", FnPlain)
               , Expr.Helpers.
                   [str "constraint"; str decl_id; decl_var; str id; var] )
         ; meta } ]
@@ -507,7 +506,7 @@ let rec check_transformed_sizedtype transform_action tr name st =
           | Constrain, CholeskyCov ->
               [ { Stmt.pattern=
                     NRFunApp
-                      ( StanLib ("check_greater_or_equal", FnPlain, AoS)
+                      ( StanLib ("check_greater_or_equal", FnPlain)
                       , Expr.Helpers.
                           [ str ("cholesky_factor_cov " ^ name)
                           ; str
@@ -626,8 +625,9 @@ let rec trans_stmt ud_dists (declc : decl_context) (ts : Ast.typed_statement) =
   | Ast.Tilde {arg; distribution; args; truncation; kind} ->
       let sfx =
         match kind with
-        | UserDefined (FnLpdf _) | StanLib (FnLpdf _) -> "_lpdf"
-        | UserDefined (FnLpmf _) | StanLib (FnLpmf _) -> "_lpmf"
+        | UserDefined (FnDist (Density, _)) | StanLib (FnDist (Density, _)) ->
+            "_lpdf"
+        | UserDefined (FnDist (Mass, _)) | StanLib (FnDist (Mass, _)) -> "_lpmf"
         | _ ->
             Common.ICE.internal_errorf
               "Impossible: tilde with non-distribution after typechecking, \
@@ -733,8 +733,12 @@ let rec trans_stmt ud_dists (declc : decl_context) (ts : Ast.typed_statement) =
 and trans_packed_assign loc trans_stmt lvals rhs assign_op =
   (* TODO tuple-unpacking: could be more efficient in case where rhs is a tuple
      expr and names don't overlap *)
-  let smeta = Ast.{loc; return_type= Incomplete} in
-  let sym, reset = Common.Gensym.enter () in
+  let smeta =
+    Ast.
+      { loc
+      ; flow_type= {controlflow= Incomplete Next; breaks= []; continues= false}
+      } in
+  let sym, reset = Common.Gensym.enter ~prefix:"unpack" in
   let rhs_type = rhs.emeta.type_ in
   let temp =
     { Stmt.pattern=
@@ -810,7 +814,7 @@ let trans_fun_def ud_dists (ts : Ast.typed_statement) =
       [ Program.
           { fdrt= returntype
           ; fdname= funname.name
-          ; fdsuffix= Fun_kind.(suffix_from_name funname.name |> without_propto)
+          ; fdsuffix= Fun_kind.(suffix_from_name funname.name)
           ; fdargs= List.map ~f:trans_arg arguments
           ; fdbody=
               trans_stmt ud_dists
@@ -966,8 +970,7 @@ let trans_prog filename (p : Ast.typed_program) : Program.Typed.t =
           IfElse (cond, {pattern= Return None; meta= Location_span.empty}, None)
       ; meta= Location_span.empty } in
   let iexpr pattern = Expr.{pattern; meta= Typed.Meta.empty} in
-  let fnot e =
-    FunApp (StanLib (Operator.to_string PNot, FnPlain, AoS), [e]) |> iexpr in
+  let fnot e = FunApp (Operator PNot, [e]) |> iexpr in
   let tparam_early_return =
     let to_var fv = iexpr (Var (Flag_vars.to_string fv)) in
     let v1 = to_var EmitTransformedParameters in

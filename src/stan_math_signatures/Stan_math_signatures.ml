@@ -40,9 +40,9 @@ let operator_to_stan_math_fns op =
   | Minus -> ["subtract"]
   | PMinus -> ["minus"]
   | Times -> ["multiply"]
-  | Divide -> ["mdivide_right"; "divide"]
+  | Divide -> ["divide"; "mdivide_right"]
   | Modulo -> ["modulus"]
-  | IntDivide -> []
+  | IntDivide -> ["divide"]
   | LDivide -> ["mdivide_left"]
   | EltTimes -> ["elt_multiply"]
   | EltDivide -> ["elt_divide"]
@@ -59,68 +59,20 @@ let operator_to_stan_math_fns op =
   | PNot -> ["logical_negation"]
   | Transpose -> ["transpose"]
 
-let int_divide_type =
-  UnsizedType.
-    ( [(AutoDiffable, UInt); (AutoDiffable, UInt)]
-    , ReturnType UInt
-    , Fun_kind.FnPlain
-    , Mem_pattern.AoS )
-
 let get_sigs name =
   let name = Utils.stdlib_distribution_name name in
   lookup_stan_math_function name |> List.sort ~cmp:UnsizedType.compare_signature
 
-let make_assignmentoperator_stan_math_signatures assop =
-  (match assop with
-    | Operator.Divide -> ["divide"]
-    | assop -> operator_to_stan_math_fns assop)
-  |> List.concat_map ~f:get_sigs
-  |> List.concat_map ~f:(function
-    | [(ad1, lhs); (ad2, rhs)], UnsizedType.ReturnType rtype, _, _
-      when rtype = lhs
-           && not
-                ((assop = Operator.EltTimes || assop = Operator.EltDivide)
-                && UnsizedType.is_scalar_type rtype) ->
-        if rhs = UReal then
-          [ ( [(ad1, lhs); (ad2, UInt)]
-            , UnsizedType.Void
-            , Fun_kind.FnPlain
-            , Mem_pattern.SoA )
-          ; ([(ad1, lhs); (ad2, UReal)], Void, FnPlain, SoA) ]
-        else [([(ad1, lhs); (ad2, rhs)], Void, FnPlain, SoA)]
-    | _ -> [])
-
-let pp_math_sigs ppf name =
-  (Fmt.list ~sep:Fmt.cut UnsizedType.pp_math_sig) ppf (get_sigs name)
-
-let pretty_print_math_sigs = Fmt.str "@[<v>@,%a@]" pp_math_sigs
-
-let string_operator_to_stan_math_fns str =
-  match str with
-  | "Plus__" -> "add"
-  | "PPlus__" -> "plus"
-  | "Minus__" -> "subtract"
-  | "PMinus__" -> "minus"
-  | "Times__" -> "multiply"
-  | "Divide__" -> "divide"
-  | "Modulo__" -> "modulus"
-  | "IntDivide__" -> "divide"
-  | "LDivide__" -> "mdivide_left"
-  | "EltTimes__" -> "elt_multiply"
-  | "EltDivide__" -> "elt_divide"
-  | "Pow__" -> "pow"
-  | "EltPow__" -> "pow"
-  | "Or__" -> "logical_or"
-  | "And__" -> "logical_and"
-  | "Equals__" -> "logical_eq"
-  | "NEquals__" -> "logical_neq"
-  | "Less__" -> "logical_lt"
-  | "Leq__" -> "logical_lte"
-  | "Greater__" -> "logical_gt"
-  | "Geq__" -> "logical_gte"
-  | "PNot__" -> "logical_negation"
-  | "Transpose__" -> "transpose"
-  | _ -> str
+let operator_to_stan_math_signatures op =
+  let int_only_operator_type =
+    UnsizedType.
+      ( [(AutoDiffable, UInt); (AutoDiffable, UInt)]
+      , ReturnType UInt
+      , Fun_kind.FnPlain
+      , Mem_pattern.AoS ) in
+  match op with
+  | Operator.IntDivide | And | Or -> [int_only_operator_type]
+  | _ -> operator_to_stan_math_fns op |> List.concat_map ~f:get_sigs
 
 let pretty_print_all_math_sigs ppf () =
   let open Fmt in
@@ -142,11 +94,6 @@ let pretty_print_all_math_distributions ppf () =
   let pp_dist ppf (name, kinds) =
     pf ppf "@[%s: %a@]" name (list ~sep:comma Fmt.string) kinds in
   pf ppf "@[<v>%a@]" (list ~sep:cut pp_dist) distributions
-
-let pretty_print_math_lib_operator_sigs op =
-  if op = Operator.IntDivide then
-    [Fmt.str "@[<v>@,%a@]" UnsizedType.pp_math_sig int_divide_type]
-  else operator_to_stan_math_fns op |> List.map ~f:pretty_print_math_sigs
 
 (* variadics *)
 
@@ -183,7 +130,7 @@ let laplace_helper_lik_args =
       ; (AutoDiffable, UVector) ] )
   ; ( "neg_binomial_2_log"
     , [ (AutoDiffable, UArray UInt); (AutoDiffable, UArray UInt)
-      ; (AutoDiffable, UVector); (AutoDiffable, UVector) ] )
+      ; (AutoDiffable, UReal); (AutoDiffable, UVector) ] )
   ; ( "poisson_log"
     , [ (AutoDiffable, UArray UInt); (AutoDiffable, UArray UInt)
       ; (AutoDiffable, UVector) ] ) ]

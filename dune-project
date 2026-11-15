@@ -1,4 +1,4 @@
-(lang dune 3.12)
+(lang dune 3.22)
 
 (name stanc)
 
@@ -14,7 +14,7 @@
  (synopsis "The Stan compiler and utilities")
  (depends
   (ocaml
-   (= 5.5.0))
+   (= 5.5.2))
   (menhir
    (= 20260209))
   (fmt
@@ -65,4 +65,5 @@
     PATH "%{env:PATH=''}"
     (run menhirformat --indent-once %{input-file})))))
 
+; can be removed after requring (lang dune 3.24)
 (using directory-targets 0.1)
