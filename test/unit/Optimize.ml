@@ -4204,3 +4204,40 @@ let%expect_test "inlined tuple arguments are not bound to temporaries" =
       target += inline_first_return1__;
     }
     |}]
+
+let%expect_test "partial evaluation does not trust an inlined argument's size" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real head_sum(vector y, int k) {
+          return sum(y[1:k]);
+        }
+      }
+      data {
+        int N;
+        vector[N] v;
+      }
+      parameters {
+        real mu;
+      }
+      model {
+        target += mu * head_sum(v + 1, 0);
+      }
+      |}
+  in
+  let mir = function_inlining mir |> partial_evaluation in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
+  [%expect
+    {|
+    real mu;
+    {
+      data vector[0] inline_head_sum_y_arg2__;
+      data real inline_head_sum_return1__;
+      inline_head_sum_y_arg2__ = (v + promote(1, real, data));
+      {
+        inline_head_sum_return1__ = sum(inline_head_sum_y_arg2__[1:0]);
+      }
+      target += (mu * inline_head_sum_return1__);
+    }
+    |}]

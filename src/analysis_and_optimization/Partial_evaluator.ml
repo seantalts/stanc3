@@ -1013,7 +1013,14 @@ let rec eval_stmt info Stmt.{pattern; meta} =
     | Decl {decl_adtype; decl_id; decl_type= Type.Sized st; initialize} ->
         let st = SizedType.map expr st in
         let initialize = Stmt.Pattern.map_decl_init expr initialize in
-        ( add_known_size info decl_id (SizedType.get_dims st)
+        (* An uninitialized declaration's sizes are placeholders: inlined return
+           values and arguments take their sizes from assignment. *)
+        let info =
+          match initialize with
+          | Uninit -> info
+          | Default | Assign _ ->
+              add_known_size info decl_id (SizedType.get_dims st) in
+        ( info
         , Decl {decl_adtype; decl_id; decl_type= Type.Sized st; initialize}
           |> swrap )
     | Assignment ((LVariable name, indices), type_, value) ->
