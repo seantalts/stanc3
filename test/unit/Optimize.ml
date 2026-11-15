@@ -4170,3 +4170,37 @@ let%expect_test "inlined arguments are evaluated where the call is" =
       }
     }
     |}]
+
+let%expect_test "inlined tuple arguments are not bound to temporaries" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real first(tuple(real, real) t) {
+          return t.1 + t.1;
+        }
+      }
+      parameters {
+        real y;
+      }
+      model {
+        target += first((y * 2, y));
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
+  [%expect
+    {|
+    real y;
+    {
+      real inline_first_return1__;
+      {
+        inline_first_return1__ = (FnMakeTuple__((y * promote(2, real, data)), y).1 + FnMakeTuple__(
+                                                                        (y * promote(
+                                                                        2, real,
+                                                                        data)), y).1);
+      }
+      target += inline_first_return1__;
+    }
+    |}]
