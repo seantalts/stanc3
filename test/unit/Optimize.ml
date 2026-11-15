@@ -4241,3 +4241,40 @@ let%expect_test "partial evaluation does not trust an inlined argument's size" =
       target += (mu * inline_head_sum_return1__);
     }
     |}]
+
+let%expect_test "inlined operators on data actuals are data" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real gate(real y, real p) {
+          if (y >= 0 && y <= 1) return p;
+          return 0;
+        }
+      }
+      data {
+        real y;
+      }
+      parameters {
+        real<lower=0, upper=1> p;
+      }
+      model {
+        target += gate(y, p);
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  let rec conds acc (s : Stmt.Located.t) =
+    let acc =
+      match s.pattern with
+      | IfElse (c, _, _) -> Expr.Typed.adlevel_of c :: acc
+      | _ -> acc in
+    Stmt.Pattern.fold (fun acc _ -> acc) conds acc s.pattern in
+  List.fold_left ~init:[] ~f:conds mir.log_prob
+  |> List.rev
+  |> List.iter ~f:(fun ad ->
+      print_endline (if UnsizedType.has_autodiff ad then "autodiff" else "data"));
+  [%expect {|
+    data
+    data
+    |}]

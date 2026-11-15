@@ -345,7 +345,7 @@ let resolve_inlined_adlevels (block : Stmt.Located.t list) =
           UnsizedType.lub_ad_type [ad; Expr.Typed.adlevel_of inner]
       | Indexed (base, _) -> Some (Expr.Typed.adlevel_of base)
       | FunApp
-          ( ( StanLib _ | UserDefined _
+          ( ( StanLib _ | Operator _ | UserDefined _
             | CompilerInternal (FnMakeArray | FnMakeRowVec) )
           , (_ :: _ as args) ) ->
           lub args
