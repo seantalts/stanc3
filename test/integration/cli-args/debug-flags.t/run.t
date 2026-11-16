@@ -609,7 +609,3 @@ Flags not used elsewhere in the tests
         "transformed parameters {", "model {", or "generated quantities {".
         (Parse error state 464)
   [1]
-<<<<<<< HEAD
-||||||| parent of 994559f8c (dune promote)
-=======
->>>>>>> 994559f8c (dune promote)
