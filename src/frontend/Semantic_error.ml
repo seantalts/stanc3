@@ -150,6 +150,7 @@ module TypeError = struct
     | FuncDeclRedefined of string * UnsizedType.t * Location_span.t
     | StanMathFuncRedefined of string * UnsizedType.t
     | FunDeclExists of string * Location_span.t
+    | FunExternDefined of string * Location_span.t
     | FunDeclNoDefn of string
     | NonRealProbFunDef of UnsizedType.returntype
     | ProbDensityNonRealVariate of UnsizedType.t option
@@ -523,8 +524,17 @@ module TypeError = struct
           ~labels:(previous_declaration prev_decl)
           "Function %a has already been declared. A definition is expected."
           quoted name
+    | FunExternDefined (name, annotation) ->
+        make_error
+          ~labels:(context annotation "Marked as extern here.")
+          "Cannot provide a body for function %a marked with '@@extern'." quoted
+          name
     | FunDeclNoDefn name ->
-        make_error "Function %a is declared without specifying a definition."
+        make_error
+          "@[<v>Function %a is declared without specifying a definition.@,\
+           If this function will be supplied elsewhere after compilation \
+           (e.g., it is being manually implemented in C++) consider marking it \
+           with '@@extern' to silence this error.@]"
           quoted name
     | NonRealProbFunDef Void ->
         make_error
@@ -1316,6 +1326,9 @@ let stan_math_fn_redefined loc name ut =
 
 let fn_decl_exists loc name original_loc =
   (loc, TypeError (TypeError.FunDeclExists (name, original_loc)))
+
+let fn_extern_defined loc name annotation_loc =
+  (loc, TypeError (TypeError.FunExternDefined (name, annotation_loc)))
 
 let fn_decl_without_def loc name =
   (loc, TypeError (TypeError.FunDeclNoDefn name))
