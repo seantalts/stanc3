@@ -53,8 +53,8 @@ static constexpr std::array<const char*, 145> locations_array__ =
   " (in '../inlining-fail2.stan', line 150, column 11 to column 12)",
   " (in '../inlining-fail2.stan', line 150, column 4 to column 24)",
   " (in '../inlining-fail2.stan', line 151, column 4 to column 31)",
-  " (in '../inlining-fail2.stan', line 154, column 6 to column 55)",
   " (in '../inlining-fail2.stan', line 155, column 6 to column 64)",
+  " (in '../inlining-fail2.stan', line 154, column 6 to column 55)",
   " (in '../inlining-fail2.stan', line 153, column 21 to line 156, column 5)",
   " (in '../inlining-fail2.stan', line 153, column 4 to line 156, column 5)",
   " (in '../inlining-fail2.stan', line 157, column 4 to column 26)",
@@ -999,23 +999,23 @@ seq_cprob(const T0__& gamma_arg__, std::ostream* pstream__) {
       local_scalar_t__ log_residual_prob = DUMMY_VAR__;
       current_statement__ = 50;
       if (stan::math::logical_gte(lcm72__, 1)) {
-        current_statement__ = 47;
+        current_statement__ = 48;
         stan::model::assign(log_cprob,
           (stan::math::log(
              stan::model::rvalue(gamma, "gamma", stan::model::index_uni(1)))
           + 0), "assigning variable log_cprob", stan::model::index_uni(1));
-        current_statement__ = 48;
+        current_statement__ = 47;
         log_residual_prob = (0 +
           stan::math::log1m(
             stan::model::rvalue(gamma, "gamma", stan::model::index_uni(1))));
         for (int n = 2; n <= lcm72__; ++n) {
-          current_statement__ = 47;
+          current_statement__ = 48;
           stan::model::assign(log_cprob,
             (stan::math::log(
                stan::model::rvalue(gamma, "gamma", stan::model::index_uni(n)))
             + log_residual_prob), "assigning variable log_cprob",
             stan::model::index_uni(n));
-          current_statement__ = 48;
+          current_statement__ = 47;
           log_residual_prob = (log_residual_prob +
             stan::math::log1m(
               stan::model::rvalue(gamma, "gamma", stan::model::index_uni(n))));
@@ -3355,26 +3355,24 @@ class inlining_fail2_model final : public model_base_crtp<inlining_fail2_model> 
             std::numeric_limits<double>::quiet_NaN();
           current_statement__ = 50;
           if (stan::math::logical_gte(lcm98__, 1)) {
-            current_statement__ = 47;
+            lcm83__ = stan::model::rvalue(gamma, "gamma",
+                        stan::model::index_uni(1));
             stan::model::assign(inline_seq_cprob_log_cprob12__,
-              (stan::math::log(
-                 stan::model::rvalue(gamma, "gamma",
-                   stan::model::index_uni(1))) + 0),
+              (stan::math::log(lcm83__) + 0),
               "assigning variable inline_seq_cprob_log_cprob12__",
               stan::model::index_uni(1));
-            current_statement__ = 48;
+            current_statement__ = 47;
             inline_seq_cprob_log_residual_prob13__ = (0 +
-              stan::math::log1m(
-                stan::model::rvalue(gamma, "gamma", stan::model::index_uni(1))));
+              stan::math::log1m(lcm83__));
             for (int inline_seq_cprob_n14__ = 2; inline_seq_cprob_n14__ <=
                  lcm98__; ++inline_seq_cprob_n14__) {
-              current_statement__ = 47;
+              current_statement__ = 48;
               stan::model::assign(inline_seq_cprob_log_cprob12__,
                 (stan::math::log(gamma[(inline_seq_cprob_n14__ - 1)]) +
                 inline_seq_cprob_log_residual_prob13__),
                 "assigning variable inline_seq_cprob_log_cprob12__",
                 stan::model::index_uni(inline_seq_cprob_n14__));
-              current_statement__ = 48;
+              current_statement__ = 47;
               inline_seq_cprob_log_residual_prob13__ = (inline_seq_cprob_log_residual_prob13__
                 + stan::math::log1m(gamma[(inline_seq_cprob_n14__ - 1)]));
             }

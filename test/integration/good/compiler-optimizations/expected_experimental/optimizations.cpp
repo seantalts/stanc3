@@ -287,11 +287,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
           Eigen::Matrix<local_scalar_t__,-1,-1>, jacobian__>(lp__, 2);
       {
         double x = std::numeric_limits<double>::quiet_NaN();
-        double inline_nrfun_lp_x_arg34__;
-        int inline_nrfun_lp_early_ret_check32__ =
+        double inline_nrfun_lp_x_arg32__;
+        int inline_nrfun_lp_early_ret_check33__ =
           std::numeric_limits<int>::min();
-        for (int inline_nrfun_lp_iterator33__ = 1; inline_nrfun_lp_iterator33__
-             <= 1; ++inline_nrfun_lp_iterator33__) {
+        for (int inline_nrfun_lp_iterator34__ = 1; inline_nrfun_lp_iterator34__
+             <= 1; ++inline_nrfun_lp_iterator34__) {
           current_statement__ = 8;
           if (stan::math::logical_gt(4, 342)) {
             break;
@@ -370,11 +370,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
               break;
             }
             lp_accum__.add(inline_rfun_return47__);
-            double inline_nrfun_lp_x_arg52__;
-            int inline_nrfun_lp_early_ret_check50__ =
+            double inline_nrfun_lp_x_arg50__;
+            int inline_nrfun_lp_early_ret_check51__ =
               std::numeric_limits<int>::min();
-            for (int inline_nrfun_lp_iterator51__ = 1; inline_nrfun_lp_iterator51__
-                 <= 1; ++inline_nrfun_lp_iterator51__) {
+            for (int inline_nrfun_lp_iterator52__ = 1; inline_nrfun_lp_iterator52__
+                 <= 1; ++inline_nrfun_lp_iterator52__) {
               current_statement__ = 8;
               if (stan::math::logical_gt(34, 342)) {
                 break;
@@ -412,11 +412,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
                 break;
               }
               lp_accum__.add(inline_rfun_return47__);
-              double inline_nrfun_lp_x_arg52__;
-              int inline_nrfun_lp_early_ret_check50__ =
+              double inline_nrfun_lp_x_arg50__;
+              int inline_nrfun_lp_early_ret_check51__ =
                 std::numeric_limits<int>::min();
-              for (int inline_nrfun_lp_iterator51__ = 1; inline_nrfun_lp_iterator51__
-                   <= 1; ++inline_nrfun_lp_iterator51__) {
+              for (int inline_nrfun_lp_iterator52__ = 1; inline_nrfun_lp_iterator52__
+                   <= 1; ++inline_nrfun_lp_iterator52__) {
                 current_statement__ = 8;
                 if (stan::math::logical_gt(34, 342)) {
                   break;
@@ -846,11 +846,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
           jacobian__>(lp__, 2);
       {
         double x = std::numeric_limits<double>::quiet_NaN();
-        double inline_nrfun_lp_x_arg3__;
-        int inline_nrfun_lp_early_ret_check1__ =
+        double inline_nrfun_lp_x_arg1__;
+        int inline_nrfun_lp_early_ret_check2__ =
           std::numeric_limits<int>::min();
-        for (int inline_nrfun_lp_iterator2__ = 1; inline_nrfun_lp_iterator2__
-             <= 1; ++inline_nrfun_lp_iterator2__) {
+        for (int inline_nrfun_lp_iterator3__ = 1; inline_nrfun_lp_iterator3__
+             <= 1; ++inline_nrfun_lp_iterator3__) {
           current_statement__ = 8;
           if (stan::math::logical_gt(4, 342)) {
             break;
@@ -929,11 +929,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
               break;
             }
             lp_accum__.add(inline_rfun_return16__);
-            double inline_nrfun_lp_x_arg21__;
-            int inline_nrfun_lp_early_ret_check19__ =
+            double inline_nrfun_lp_x_arg19__;
+            int inline_nrfun_lp_early_ret_check20__ =
               std::numeric_limits<int>::min();
-            for (int inline_nrfun_lp_iterator20__ = 1; inline_nrfun_lp_iterator20__
-                 <= 1; ++inline_nrfun_lp_iterator20__) {
+            for (int inline_nrfun_lp_iterator21__ = 1; inline_nrfun_lp_iterator21__
+                 <= 1; ++inline_nrfun_lp_iterator21__) {
               current_statement__ = 8;
               if (stan::math::logical_gt(34, 342)) {
                 break;
@@ -971,11 +971,11 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
                 break;
               }
               lp_accum__.add(inline_rfun_return16__);
-              double inline_nrfun_lp_x_arg21__;
-              int inline_nrfun_lp_early_ret_check19__ =
+              double inline_nrfun_lp_x_arg19__;
+              int inline_nrfun_lp_early_ret_check20__ =
                 std::numeric_limits<int>::min();
-              for (int inline_nrfun_lp_iterator20__ = 1; inline_nrfun_lp_iterator20__
-                   <= 1; ++inline_nrfun_lp_iterator20__) {
+              for (int inline_nrfun_lp_iterator21__ = 1; inline_nrfun_lp_iterator21__
+                   <= 1; ++inline_nrfun_lp_iterator21__) {
                 current_statement__ = 8;
                 if (stan::math::logical_gt(34, 342)) {
                   break;

@@ -147,9 +147,9 @@ class function_in_function_inline_model final : public model_base_crtp<function_
       double lcm6__;
       {
         double ret = std::numeric_limits<double>::quiet_NaN();
-        double inline_outer_lpdf_return12__;
+        double inline_outer_lpdf_return5__;
         {
-          double inline_outer_lpdf_inline_inner_lpdf_return5__13__;
+          double inline_inner_lpdf_return6__;
           {
             lcm6__ = stan::math::sum(phi);
           }
@@ -190,9 +190,9 @@ class function_in_function_inline_model final : public model_base_crtp<function_
       double lcm5__;
       {
         double ret = std::numeric_limits<double>::quiet_NaN();
-        double inline_outer_lpdf_return9__;
+        double inline_outer_lpdf_return1__;
         {
-          double inline_outer_lpdf_inline_inner_lpdf_return5__10__;
+          double inline_inner_lpdf_return2__;
           {
             lcm5__ = stan::math::sum(phi);
           }

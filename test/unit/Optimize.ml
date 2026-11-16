@@ -186,14 +186,14 @@ let%expect_test "inline functions" =
 
     log_prob {
       {
-        data matrix[0, 0] inline_f_y_arg2__;
-        inline_f_y_arg2__ = FnMakeRowVec__(FnMakeRowVec__(promote(3, real, data),
+        data matrix[0, 0] inline_f_y_arg1__;
+        inline_f_y_arg1__ = FnMakeRowVec__(FnMakeRowVec__(promote(3, real, data),
                                                           promote(2, real, data)),
                                            FnMakeRowVec__(promote(4, real, data),
                                                           promote(6, real, data)));
         {
           FnPrint__(3);
-          FnPrint__(inline_f_y_arg2__);
+          FnPrint__(inline_f_y_arg1__);
         }
         data real inline_g_return3__;
         {
@@ -331,7 +331,7 @@ let%expect_test "list collapsing" =
       (((pattern
          (Block
           (((pattern
-             (Decl (decl_adtype DataOnly) (decl_id inline_f_y_arg2__)
+             (Decl (decl_adtype DataOnly) (decl_id inline_f_y_arg1__)
               (decl_type
                (Sized
                 (SMatrix AoS
@@ -342,7 +342,7 @@ let%expect_test "list collapsing" =
               (initialize Uninit)))
             (meta <opaque>))
            ((pattern
-             (Assignment ((LVariable inline_f_y_arg2__) ()) UMatrix
+             (Assignment ((LVariable inline_f_y_arg1__) ()) UMatrix
               ((pattern
                 (FunApp (CompilerInternal FnMakeRowVec)
                  (((pattern
@@ -386,7 +386,7 @@ let%expect_test "list collapsing" =
                 (meta <opaque>))
                ((pattern
                  (NRFunApp (CompilerInternal FnPrint)
-                  (((pattern (Var inline_f_y_arg2__))
+                  (((pattern (Var inline_f_y_arg1__))
                     (meta ((type_ UMatrix) (loc <opaque>) (adlevel DataOnly)))))))
                 (meta <opaque>)))))
             (meta <opaque>))
@@ -674,33 +674,33 @@ let%expect_test "inline function in for loop 2" =
 
     log_prob {
       {
-        int inline_f_return5__;
-        int inline_g_return7__;
+        int inline_f_return1__;
+        int inline_g_return3__;
         {
           FnPrint__("f");
-          inline_f_return5__ = 42;
+          inline_f_return1__ = 42;
         }
         {
           FnPrint__("g");
-          int inline_g_inline_f_return3__8__;
+          int inline_f_return4__;
           {
             FnPrint__("f");
-            inline_g_inline_f_return3__8__ = 42;
+            inline_f_return4__ = 42;
           }
-          inline_g_return7__ = (inline_g_inline_f_return3__8__ + 24);
+          inline_g_return3__ = (inline_f_return4__ + 24);
         }
-        for(i in inline_f_return5__:inline_g_return7__) {
+        for(i in inline_f_return1__:inline_g_return3__) {
           {
             FnPrint__("body");
           }
           {
             FnPrint__("g");
-            int inline_g_inline_f_return3__8__;
+            int inline_f_return4__;
             {
               FnPrint__("f");
-              inline_g_inline_f_return3__8__ = 42;
+              inline_f_return4__ = 42;
             }
-            inline_g_return7__ = (inline_g_inline_f_return3__8__ + 24);
+            inline_g_return3__ = (inline_f_return4__ + 24);
           }
         }
       }
@@ -3917,9 +3917,9 @@ let%expect_test "inlined data actuals keep their adlevel" =
   [%expect
     {|
     (v (AutoDiffable))
-    (inline_priors_lp_inline_prior_lp_p2_arg8__9__ (DataOnly))
-    (inline_priors_lp_inline_prior_lp_p1_arg7__10__ (DataOnly))
-    (inline_priors_lp_inline_prior_lp_v_arg6__11__ (AutoDiffable))
+    (inline_prior_lp_p2_arg4__ (DataOnly))
+    (inline_prior_lp_p1_arg3__ (DataOnly))
+    (inline_prior_lp_v_arg2__ (AutoDiffable))
     (normal_lpdf (AutoDiffable DataOnly DataOnly))
     (normal_lcdf (DataOnly DataOnly DataOnly))
     (normal_lpdf (AutoDiffable DataOnly DataOnly))
@@ -4050,49 +4050,6 @@ let%expect_test "demoted inlined containers stay arrays of structs" =
     (d AutoDiffable AoS)
     (inline_indices_return1__ DataOnly AoS)
     |}]
-
-let%expect_test "deferred inlined-call resolution matches eager inlining" =
-  let model =
-    {|
-      functions {
-        real widen(real s) {
-          return 2 * s;
-        }
-        real twice(real x) {
-          return x + x;
-        }
-      }
-      data {
-        real s;
-      }
-      parameters {
-        real tau;
-      }
-      model {
-        tau ~ normal(twice(widen(s)), twice(tau));
-      }
-      |}
-  in
-  let with_rmlp (mir : Program.Typed.t) =
-    {mir with reverse_mode_log_prob= mir.log_prob} in
-  let eager = reset_and_mir_of_string model |> with_rmlp |> function_inlining in
-  let marked =
-    reset_and_mir_of_string model
-    |> with_rmlp
-    |> function_inlining ~resolve:false in
-  let rec markers acc (s : Stmt.Located.t) =
-    let acc = if Option.is_some (inlined_call s) then acc + 1 else acc in
-    Stmt.Pattern.fold (fun acc _ -> acc) markers acc s.pattern in
-  let count block = List.fold_left ~init:0 ~f:markers block in
-  let deferred = resolve_inlined_program marked in
-  let show (mir : Program.Typed.t) = Fmt.str "%a" Program.Typed.pp mir in
-  print_s
-    [%sexp
-      (count marked.log_prob : int)
-    , (count marked.reverse_mode_log_prob : int)
-    , (count deferred.log_prob : int)
-    , (String.equal (show eager) (show deferred) : bool)];
-  [%expect {| (3 3 0 true) |}]
 
 let%expect_test "inlined arguments are evaluated where the call is" =
   let mir =
@@ -4277,4 +4234,73 @@ let%expect_test "inlined operators on data actuals are data" =
   [%expect {|
     data
     data
+    |}]
+
+let%expect_test "inlined calls with only data actuals are data" =
+  reset_and_mir_with_passes ["inlining"]
+    {|
+      functions {
+        real widen(real s) { real t = 2 * s; return t; }
+        void prior_lp(real x, real s) {
+          real sd = 2 * s;
+          x ~ normal(widen(s), sd);
+          x ~ normal(widen(2 * s), widen(sd));
+        }
+      }
+      data { real s; }
+      parameters { real tau; }
+      model {
+        tau ~ normal(0, widen(s));
+        prior_lp(tau, s);
+        tau ~ normal(0, widen(tau));
+      }
+      |}
+  |> print_log_prob;
+  [%expect
+    {|
+    real tau = (FnReadParam(constrain Identity)(dims())(mem_pattern AoS))__();
+    {
+      data real inline_widen_return19__;
+      {
+        data real inline_widen_t20__;
+        inline_widen_t20__ = (promote(2, real, data) * s);
+        inline_widen_return19__ = inline_widen_t20__;
+      }
+      target += normal_lupdf(tau, promote(0, real, data), inline_widen_return19__);
+      {
+        real inline_prior_lp_sd22__;
+        inline_prior_lp_sd22__ = (promote(2, real, data) * s);
+        data real inline_widen_return23__;
+        {
+          data real inline_widen_t24__;
+          inline_widen_t24__ = (promote(2, real, data) * s);
+          inline_widen_return23__ = inline_widen_t24__;
+        }
+        target += normal_lupdf(tau, inline_widen_return23__,
+                               inline_prior_lp_sd22__);
+        real inline_widen_return30__;
+        data real inline_widen_s_arg27__;
+        data real inline_widen_return26__;
+        {
+          real inline_widen_t31__;
+          inline_widen_t31__ = (promote(2, real, data) * inline_prior_lp_sd22__);
+          inline_widen_return30__ = inline_widen_t31__;
+        }
+        inline_widen_s_arg27__ = (promote(2, real, data) * s);
+        {
+          data real inline_widen_t28__;
+          inline_widen_t28__ = (promote(2, real, data) * inline_widen_s_arg27__);
+          inline_widen_return26__ = inline_widen_t28__;
+        }
+        target += normal_lupdf(tau, inline_widen_return26__,
+                               inline_widen_return30__);
+      }
+      real inline_widen_return34__;
+      {
+        real inline_widen_t35__;
+        inline_widen_t35__ = (promote(2, real, data) * tau);
+        inline_widen_return34__ = inline_widen_t35__;
+      }
+      target += normal_lupdf(tau, promote(0, real, data), inline_widen_return34__);
+    }
     |}]

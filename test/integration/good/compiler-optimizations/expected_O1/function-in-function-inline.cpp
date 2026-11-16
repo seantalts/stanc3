@@ -139,18 +139,17 @@ class function_in_function_inline_model final : public model_base_crtp<function_
     (void) function__;
     try {
       local_scalar_t__ ret = DUMMY_VAR__;
-      double inline_outer_lpdf_return12__;
+      double inline_outer_lpdf_return5__;
       {
-        double inline_outer_lpdf_inline_inner_lpdf_return5__13__;
+        double inline_inner_lpdf_return6__;
         {
           current_statement__ = 2;
-          inline_outer_lpdf_inline_inner_lpdf_return5__13__ = stan::math::sum(
-                                                                phi);
+          inline_inner_lpdf_return6__ = stan::math::sum(phi);
         }
-        inline_outer_lpdf_return12__ = inline_outer_lpdf_inline_inner_lpdf_return5__13__;
+        inline_outer_lpdf_return5__ = inline_inner_lpdf_return6__;
       }
       current_statement__ = 3;
-      lp_accum__.add(inline_outer_lpdf_return12__);
+      lp_accum__.add(inline_outer_lpdf_return5__);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }
@@ -182,18 +181,17 @@ class function_in_function_inline_model final : public model_base_crtp<function_
     (void) function__;
     try {
       local_scalar_t__ ret = DUMMY_VAR__;
-      double inline_outer_lpdf_return9__;
+      double inline_outer_lpdf_return1__;
       {
-        double inline_outer_lpdf_inline_inner_lpdf_return5__10__;
+        double inline_inner_lpdf_return2__;
         {
           current_statement__ = 2;
-          inline_outer_lpdf_inline_inner_lpdf_return5__10__ = stan::math::sum(
-                                                                phi);
+          inline_inner_lpdf_return2__ = stan::math::sum(phi);
         }
-        inline_outer_lpdf_return9__ = inline_outer_lpdf_inline_inner_lpdf_return5__10__;
+        inline_outer_lpdf_return1__ = inline_inner_lpdf_return2__;
       }
       current_statement__ = 3;
-      lp_accum__.add(inline_outer_lpdf_return9__);
+      lp_accum__.add(inline_outer_lpdf_return1__);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
     }

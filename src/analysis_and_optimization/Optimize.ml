@@ -80,10 +80,6 @@ let slist_concat_no_loc l stmt =
 let gen_inline_var (name : string) (id_var : string) =
   Gensym.next ~prefix:"inline" ~extra:("_" ^ name ^ "_" ^ id_var) ()
 
-(* The temporaries inline_function_arguments bound actuals to in this inlining
-   run, under every name inlining gave them. *)
-let bound_actuals = ref Set.Poly.empty
-
 let replace_fresh_local_vars (fname : string) stmt =
   let f (m : string String.Map.t) = function
     | Stmt.Pattern.Decl {decl_adtype; decl_type; decl_id; initialize} ->
@@ -91,8 +87,6 @@ let replace_fresh_local_vars (fname : string) stmt =
           match String.Map.find_opt decl_id m with
           | Some existing -> existing
           | None -> gen_inline_var fname decl_id in
-        if Set.Poly.mem decl_id !bound_actuals then
-          bound_actuals := Set.Poly.add new_name !bound_actuals;
         ( Stmt.Pattern.Decl
             {decl_adtype; decl_id= new_name; decl_type; initialize}
         , String.Map.add m ~key:decl_id ~data:new_name )
@@ -257,13 +251,83 @@ let inline_list f es =
   let es = List.map ~f:(function _, _, x -> x) dse_list in
   (d_list, s_list, es)
 
+(* Bodies are kept as written and inlined at each call, after the actuals are
+   known, so that calls inside them are decided from those actuals too. *)
 type function_inline_map =
-  { plain:
-      (ExprSet.elt Middle.Type.t option * string list * Stmt.Located.t)
-      Std.String.Map.t
-  ; unnormalized:
-      (ExprSet.elt Middle.Type.t option * string list * Stmt.Located.t)
-      Std.String.Map.t }
+  { plain: inline_body Std.String.Map.t
+  ; unnormalized: inline_body Std.String.Map.t }
+
+and inline_body =
+  { return_type: ExprSet.elt Middle.Type.t option
+  ; formals: string list
+  ; body: Stmt.Located.t
+  ; body_propto: Fun_kind.propto
+  ; callees: function_inline_map }
+
+(* Recompute an expression's adlevel from the variables it reads. Only demotes:
+   a substituted body still carries the adlevels its formals gave it. *)
+let rec refresh_adlevel (e : Expr.Typed.t) =
+  let pattern = Expr.Pattern.map refresh_adlevel e.pattern in
+  let lub es = UnsizedType.lub_ad_type (List.map ~f:Expr.Typed.adlevel_of es) in
+  let derived =
+    match pattern with
+    | Lit _ -> Some UnsizedType.DataOnly
+    | Promotion (inner, _, ad) ->
+        UnsizedType.lub_ad_type [ad; Expr.Typed.adlevel_of inner]
+    | Indexed (base, _) -> Some (Expr.Typed.adlevel_of base)
+    | FunApp
+        ( ( StanLib (_, (FnPlain | FnDist _))
+          | UserDefined (_, (FnPlain | FnDist _))
+          | Operator _ )
+        , (_ :: _ as args) ) ->
+        lub args
+    | TernaryIf (e1, e2, e3) -> lub [e1; e2; e3]
+    | EAnd (e1, e2) | EOr (e1, e2) -> lub [e1; e2]
+    | Var _ | FunApp _ | TupleProjection _ -> None in
+  let adlevel =
+    match (e.meta.adlevel, derived) with
+    | AutoDiffable, Some DataOnly -> UnsizedType.DataOnly
+    | adlevel, _ -> adlevel in
+  {Expr.pattern; meta= {e.meta with adlevel}}
+
+(* Expressions over the retyped formals: CmdStan types [p[i]] in a body by its
+   actual, so a data actual's index or arithmetic is data even when another
+   actual is a parameter. *)
+let rec refresh_stmt (s : Stmt.Located.t) =
+  {s with pattern= Stmt.Pattern.map refresh_adlevel refresh_stmt s.pattern}
+
+let rec demote_expr (e : Expr.Typed.t) =
+  let data ut = UnsizedType.fill_adtype_for_type DataOnly ut in
+  let pattern =
+    match Expr.Pattern.map demote_expr e.pattern with
+    | Promotion (inner, ut, _) -> Expr.Pattern.Promotion (inner, ut, data ut)
+    | pattern -> pattern in
+  {Expr.pattern; meta= {e.meta with adlevel= data e.meta.type_}}
+
+let rec demote_stmt (s : Stmt.Located.t) =
+  let pattern =
+    match Stmt.Pattern.map demote_expr demote_stmt s.pattern with
+    | Decl ({decl_type= Sized st; _} as decl)
+      when not (UnsizedType.is_int_type (SizedType.to_unsized st)) ->
+        let st = SizedType.demote_sizedtype_mem st in
+        Stmt.Pattern.Decl
+          { decl with
+            decl_type= Sized st
+          ; decl_adtype=
+              UnsizedType.fill_adtype_for_type DataOnly
+                (SizedType.to_unsized st) }
+    | pattern -> pattern in
+  {s with pattern}
+
+let rec stmt_reads_target (s : Stmt.Located.t) =
+  let rec expr (e : Expr.Typed.t) =
+    match e.pattern with
+    | FunApp ((UserDefined (_, FnTarget) | StanLib (_, FnTarget)), _) -> true
+    | pattern -> Expr.Pattern.fold (fun b e -> b || expr e) false pattern in
+  Stmt.Pattern.fold
+    (fun b e -> b || expr e)
+    (fun b s -> b || stmt_reads_target s)
+    false s.pattern
 
 let compute_suffix_and_map propto suffix fim =
   let open Fun_kind in
@@ -272,164 +336,6 @@ let compute_suffix_and_map propto suffix fim =
       (FnDist (x, Unnormalized), fim.unnormalized)
   | FnDist (x, _) -> (FnDist (x, Normalized), fim.plain)
   | _ -> (suffix, fim.plain)
-
-(* CmdStan instantiates a function body with its actual argument types: the
-   return value, locals and promotions take local_scalar_t__, a var exactly when
-   some non-integer actual is. An inlined body sits in log_prob instead, where
-   its declarations and promotions say var whatever the actuals are, and its
-   expressions keep the adlevels its formals gave them (`s[i]` stays
-   AutoDiffable after `s` becomes data). A callee is inlined once into its
-   callers' bodies and copied from there, so the actuals are known only once a
-   call reaches a program block.
-
-   Each inlined call is therefore wrapped in a marker carrying its return
-   variable and its actuals, which renaming and substitution keep current. Once
-   inlining is done, resolve_inlined_adlevels decides each call from its
-   actuals, demotes what CmdStan makes a double, recomputes expression adlevels
-   from the variables they read, and removes the markers. Every change demotes
-   AutoDiffable to DataOnly. *)
-let inlined_call_marker = "__stanc_inlined_call__"
-
-let mark_inlined_call (return : string option) (actuals : Expr.Typed.t list)
-    (body : Stmt.Located.t list) =
-  let carried =
-    List.filter actuals ~f:(fun (e : Expr.Typed.t) ->
-        not (UnsizedType.is_int_type e.meta.type_)) in
-  let return =
-    Option.map return ~f:(fun name ->
-        Expr.{pattern= Var name; meta= Typed.Meta.empty}) in
-  let carrier =
-    Stmt.
-      { pattern=
-          Pattern.NRFunApp
-            (CompilerInternal FnPrint, Option.to_list return @ carried)
-      ; meta= Location_span.empty } in
-  let tag = inlined_call_marker ^ if Option.is_some return then "1" else "0" in
-  Stmt.Pattern.Profile (tag, carrier :: body)
-
-let inlined_call (s : Stmt.Located.t) =
-  match s.pattern with
-  | Profile
-      (tag, {pattern= NRFunApp (CompilerInternal FnPrint, carried); _} :: body)
-    when String.starts_with tag ~prefix:inlined_call_marker -> (
-      match (String.ends_with tag ~suffix:"1", carried) with
-      | true, {pattern= Var return; _} :: actuals ->
-          Some (Some return, actuals, body)
-      | true, _ -> None
-      | false, actuals -> Some (None, actuals, body))
-  | _ -> None
-
-let demote_adtype ad ut =
-  if UnsizedType.has_autodiff ad then
-    UnsizedType.fill_adtype_for_type DataOnly ut
-  else ad
-
-let resolve_inlined_adlevels (block : Stmt.Located.t list) =
-  let levels = ref String.Map.empty in
-  let demoted = ref Set.Poly.empty in
-  let set name ad = levels := String.Map.add !levels ~key:name ~data:ad in
-  let rec expr in_data (e : Expr.Typed.t) =
-    let pattern = Expr.Pattern.map (expr in_data) e.pattern in
-    let lub (es : Expr.Typed.t list) =
-      UnsizedType.lub_ad_type (List.map ~f:Expr.Typed.adlevel_of es) in
-    let pattern =
-      match pattern with
-      | Promotion (inner, ut, ad) when in_data ->
-          Expr.Pattern.Promotion (inner, ut, demote_adtype ad ut)
-      | pattern -> pattern in
-    let derived =
-      match pattern with
-      | Var x -> String.Map.find_opt x !levels
-      | Lit _ -> Some UnsizedType.DataOnly
-      | Promotion (inner, _, ad) ->
-          UnsizedType.lub_ad_type [ad; Expr.Typed.adlevel_of inner]
-      | Indexed (base, _) -> Some (Expr.Typed.adlevel_of base)
-      | FunApp
-          ( ( StanLib _ | Operator _ | UserDefined _
-            | CompilerInternal (FnMakeArray | FnMakeRowVec) )
-          , (_ :: _ as args) ) ->
-          lub args
-      | TernaryIf (e1, e2, e3) -> lub [e1; e2; e3]
-      | EAnd (e1, e2) | EOr (e1, e2) -> lub [e1; e2]
-      | FunApp _ | TupleProjection _ -> None in
-    let adlevel =
-      match (e.meta.adlevel, derived) with
-      | AutoDiffable, Some DataOnly -> UnsizedType.DataOnly
-      | adlevel, _ -> adlevel in
-    {Expr.pattern; meta= {e.meta with adlevel}} in
-  let call_in_data in_data actuals =
-    in_data
-    || List.for_all actuals ~f:(fun e ->
-        not (UnsizedType.has_autodiff (Expr.Typed.adlevel_of (expr false e))))
-  in
-  (* Decide in program order: a call's actuals read only what precedes it. *)
-  let rec decide in_data (s : Stmt.Located.t) =
-    match (inlined_call s, s.pattern) with
-    | Some (return, actuals, body), _ ->
-        let in_data = call_in_data in_data actuals in
-        if in_data then
-          Option.iter return ~f:(fun name ->
-              demoted := Set.Poly.add name !demoted;
-              set name DataOnly);
-        List.iter body ~f:(decide in_data)
-    | None, Decl {decl_id; decl_adtype; initialize; _} ->
-        (match initialize with Assign e -> ignore (expr in_data e) | _ -> ());
-        if in_data && UnsizedType.has_autodiff decl_adtype then (
-          demoted := Set.Poly.add decl_id !demoted;
-          set decl_id DataOnly)
-        else set decl_id decl_adtype
-    | None, Assignment (lhs, _, rhs)
-      when Set.Poly.mem (Stmt.Helpers.lhs_variable lhs) !bound_actuals ->
-        let name = Stmt.Helpers.lhs_variable lhs in
-        let ad = Expr.Typed.adlevel_of (expr in_data rhs) in
-        if not (UnsizedType.has_autodiff ad) then (
-          demoted := Set.Poly.add name !demoted;
-          set name DataOnly)
-    | None, pattern ->
-        Stmt.Pattern.fold
-          (fun () _ -> ())
-          (fun () s -> decide in_data s)
-          () pattern in
-  let rec rewrite in_data (s : Stmt.Located.t) =
-    match inlined_call s with
-    | Some (_, actuals, body) ->
-        let in_data = call_in_data in_data actuals in
-        let pattern =
-          match List.map body ~f:(rewrite in_data) with
-          | [(single : Stmt.Located.t)] -> single.pattern
-          | body -> SList body in
-        {s with pattern}
-    | None ->
-        let pattern =
-          match Stmt.Pattern.map (expr in_data) (rewrite in_data) s.pattern with
-          | Decl ({decl_id; decl_adtype; decl_type; _} as decl)
-            when Set.Poly.mem decl_id !demoted
-                 && not (UnsizedType.is_int_type (Type.to_unsized decl_type)) ->
-              let decl_type =
-                match decl_type with
-                | Sized st -> Type.Sized (SizedType.demote_sizedtype_mem st)
-                | unsized -> unsized in
-              Stmt.Pattern.Decl
-                { decl with
-                  decl_type
-                ; decl_adtype=
-                    demote_adtype decl_adtype (Type.to_unsized decl_type) }
-          | pattern -> pattern in
-        {s with pattern} in
-  List.iter block ~f:(decide false);
-  List.map block ~f:(rewrite false)
-
-(* Outside log_prob every scalar is already a double, so only the markers go. *)
-let rec remove_inlined_call_markers (s : Stmt.Located.t) =
-  match inlined_call s with
-  | Some (_, _, body) -> (
-      match List.map body ~f:remove_inlined_call_markers with
-      | [single] -> single
-      | body -> {s with pattern= SList body})
-  | None ->
-      { s with
-        pattern= Stmt.Pattern.map Fun.id remove_inlined_call_markers s.pattern
-      }
 
 (* Triple is (declaration list, statement list, return expression) *)
 let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
@@ -461,17 +367,25 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
               , { e with
                   pattern= FunApp (Fun_kind.UserDefined (fname, suffix), es) }
               )
-          | Some (rt, args, body) ->
+          | Some ({return_type= rt; formals= args; _} as callee) ->
               let inline_return_name = gen_inline_var fname "return" in
               let d_list, s_list, es =
                 inline_function_arguments fname propto adt fim args es in
               let handle =
                 handle_early_returns fname (Some inline_return_name) in
+              let body, data_call =
+                instantiate_inline_body fname adt callee es in
               let d_list2, s_list2, (e : Expr.Typed.t) =
                 let decl_type =
                   Option.map ~f:unsafe_unsized_to_sized_type rt
                   |> Option.map ~f:(fun s -> Type.Sized s)
                   |> Option.get in
+                let adt =
+                  if
+                    data_call
+                    && not (UnsizedType.is_int_type (Type.to_unsized decl_type))
+                  then UnsizedType.DataOnly
+                  else adt in
                 ( [ Stmt.Pattern.Decl
                       { decl_adtype=
                           UnsizedType.fill_adtype_for_type adt
@@ -479,15 +393,7 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
                       ; decl_id= inline_return_name
                       ; decl_type
                       ; initialize= Uninit } ]
-                  (* We should minimize the code that's having its variables
-                     replaced to avoid conflict with the (two) new dummy
-                     variables introduced by inlining *)
-                , [ mark_inlined_call (Some inline_return_name) es
-                      [ { pattern=
-                            handle
-                              (subst_args_stmt args es
-                                 (replace_fresh_local_vars fname body))
-                        ; meta= Location_span.empty } ] ]
+                , [handle body]
                 , { pattern= Var inline_return_name
                   ; meta=
                       Expr.Typed.Meta.
@@ -543,6 +449,7 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
 and inline_function_arguments fname propto adt fim args es =
   let inline_function_argument (name, e) =
     let decls, stmts, e = inline_function_expression propto adt fim e in
+    let e = refresh_adlevel e in
     match e.pattern with
     | Var _ | Lit _ -> (decls, stmts, e)
     | _ when UnsizedType.contains_tuple e.meta.type_ ->
@@ -555,7 +462,6 @@ and inline_function_arguments fname propto adt fim args es =
            which callers keep inside conditionals and loop conditions, while the
            declaration is hoisted with the others. *)
         let temp = gen_inline_var fname (name ^ "_arg") in
-        bound_actuals := Set.Poly.add temp !bound_actuals;
         ( decls
           @ [ Stmt.Pattern.Decl
                 { decl_adtype= e.meta.adlevel
@@ -587,7 +493,30 @@ and inline_function_index propto adt fim i =
       let dl, sl, e = inline_expr e in
       (dl, sl, MultiIndex e)
 
-let rec inline_function_statement propto adt fim Stmt.{pattern; meta} =
+(* CmdStan instantiates a function with its actuals' types, so when no
+   non-integer actual is autodiffable its return value and locals are doubles.
+   Inline the body the same way. Returns the body with the actuals substituted
+   and whether the call was decided to be data. *)
+and instantiate_inline_body fname adt {formals; body; body_propto; callees; _}
+    (actuals : Expr.Typed.t list) =
+  let data_call =
+    UnsizedType.is_autodifftype adt
+    && List.for_all actuals ~f:(fun (e : Expr.Typed.t) ->
+        UnsizedType.is_int_type e.meta.type_
+        || not (UnsizedType.has_autodiff e.meta.adlevel))
+    && not (stmt_reads_target body) in
+  (* Calls inside the body read the formals; give them the actuals' adlevels
+     before inlining those calls, then substitute the actuals themselves. *)
+  let retyped =
+    List.map2 formals actuals ~f:(fun x (e : Expr.Typed.t) ->
+        Expr.{pattern= Var x; meta= e.meta}) in
+  let body = replace_fresh_local_vars fname body in
+  let body = subst_args_stmt formals retyped body |> refresh_stmt in
+  let body = if data_call then demote_stmt body else body in
+  let body = inline_function_statement body_propto adt callees body in
+  (subst_args_stmt formals actuals body, data_call)
+
+and inline_function_statement propto adt fim Stmt.{pattern; meta} =
   let inline_expr = inline_function_expression propto adt fim in
   Stmt.
     { pattern=
@@ -625,16 +554,12 @@ let rec inline_function_statement propto adt fim Stmt.{pattern; meta} =
                 let d, s, es = inline_list inline_expr exprs in
                 slist_concat_no_loc (d @ s)
                   (NRFunApp (UserDefined (fname, sfx), es))
-            | Some (_, args, b) ->
-                let b = replace_fresh_local_vars fname b in
-                let b = handle_early_returns fname None b in
+            | Some ({formals= args; _} as callee) ->
                 let d, s, es =
                   inline_function_arguments fname propto adt fim args exprs
                 in
-                slist_concat_no_loc (d @ s)
-                  (mark_inlined_call None es
-                     [ subst_args_stmt args es
-                         {pattern= b; meta= Location_span.empty} ]))
+                let b, _ = instantiate_inline_body fname adt callee es in
+                slist_concat_no_loc (d @ s) (handle_early_returns fname None b))
         | Return None -> Return None
         | Return (Some expr) ->
             let d, s, e = inline_expr expr in
@@ -695,17 +620,20 @@ let rec inline_function_statement propto adt fim Stmt.{pattern; meta} =
         | Continue -> Continue)
     ; meta }
 
-let create_function_inline_map adt l =
+let create_function_inline_map l =
   let f accum Program.{fdname; fdargs; fdbody; fdrt; _} =
     match fdbody with
     | None -> accum
     | Some fdbody -> (
-        let create_data propto =
-          ( Option.map
-              ~f:(fun x -> Type.Unsized x)
-              (UnsizedType.returntype_to_type_opt fdrt)
-          , List.map ~f:(fun (_, name, _) -> name) fdargs
-          , inline_function_statement propto adt accum fdbody ) in
+        let create_data body_propto =
+          { return_type=
+              Option.map
+                ~f:(fun x -> Type.Unsized x)
+                (UnsizedType.returntype_to_type_opt fdrt)
+          ; formals= List.map ~f:(fun (_, name, _) -> name) fdargs
+          ; body= fdbody
+          ; body_propto
+          ; callees= accum } in
         match Middle.Fun_kind.suffix_from_name fdname with
         | FnDist _ ->
             let data = create_data Normalized in
@@ -722,13 +650,7 @@ let create_function_inline_map adt l =
     ~init:{plain= String.Map.empty; unnormalized= String.Map.empty}
     ~f
 
-let resolve_inlined_program (mir : Program.Typed.t) =
-  { mir with
-    log_prob= resolve_inlined_adlevels mir.log_prob
-  ; reverse_mode_log_prob= resolve_inlined_adlevels mir.reverse_mode_log_prob }
-
-let function_inlining ?(resolve = true) (mir : Program.Typed.t) =
-  bound_actuals := Set.Poly.empty;
+let function_inlining (mir : Program.Typed.t) =
   (* We add only the functions with a single definition to the inline map.
      Overloaded functions cannot be inlined. *)
   let can_inline =
@@ -739,39 +661,26 @@ let function_inlining ?(resolve = true) (mir : Program.Typed.t) =
   let inlineable_functions =
     List.filter mir.functions_block ~f:(fun Program.{fdname; _} ->
         String.Map.find fdname can_inline) in
-  let dataonly_inline_map =
-    create_function_inline_map UnsizedType.DataOnly inlineable_functions in
-  let autodiff_inline_map =
-    create_function_inline_map UnsizedType.AutoDiffable inlineable_functions
-  in
+  let inline_map = create_function_inline_map inlineable_functions in
   let dataonly_inline_function_statements =
-    List.map ~f:(fun s ->
-        inline_function_statement Unnormalized UnsizedType.DataOnly
-          dataonly_inline_map s
-        |> remove_inlined_call_markers) in
-  let autodiffable_inline_function_statements ?(keep_markers = false) block =
-    let block =
-      List.map
-        ~f:
-          (inline_function_statement Unnormalized UnsizedType.AutoDiffable
-             autodiff_inline_map)
-        block in
-    if keep_markers then block
-    else List.map ~f:remove_inlined_call_markers block in
-  let inlined =
-    { mir with
-      transform_inits=
-        autodiffable_inline_function_statements mir.transform_inits
-    ; unconstrain_array=
-        autodiffable_inline_function_statements mir.unconstrain_array
-    ; log_prob=
-        autodiffable_inline_function_statements ~keep_markers:true mir.log_prob
-    ; reverse_mode_log_prob=
-        autodiffable_inline_function_statements ~keep_markers:true
-          mir.reverse_mode_log_prob
-    ; generate_quantities=
-        dataonly_inline_function_statements mir.generate_quantities } in
-  if resolve then resolve_inlined_program inlined else inlined
+    List.map
+      ~f:
+        (inline_function_statement Unnormalized UnsizedType.DataOnly inline_map)
+  in
+  let autodiffable_inline_function_statements =
+    List.map
+      ~f:
+        (inline_function_statement Unnormalized UnsizedType.AutoDiffable
+           inline_map) in
+  { mir with
+    transform_inits= autodiffable_inline_function_statements mir.transform_inits
+  ; unconstrain_array=
+      autodiffable_inline_function_statements mir.unconstrain_array
+  ; log_prob= autodiffable_inline_function_statements mir.log_prob
+  ; reverse_mode_log_prob=
+      autodiffable_inline_function_statements mir.reverse_mode_log_prob
+  ; generate_quantities=
+      dataonly_inline_function_statements mir.generate_quantities }
 
 let rec contains_top_break_or_continue Stmt.{pattern; _} =
   match pattern with
@@ -1847,7 +1756,7 @@ let optimization_suite ?(settings = all_optimizations) mir =
       (* Book section A *)
       (* Book section B *)
       (* Book: Procedure integration *)
-      (function_inlining ~resolve:true, settings.function_inlining)
+      (function_inlining, settings.function_inlining)
       (* Book: Sparse conditional constant propagation *)
     ; (constant_propagation ~preserve_stability, settings.constant_propagation)
       (* Book section C *)
