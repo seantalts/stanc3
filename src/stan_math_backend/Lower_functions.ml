@@ -218,6 +218,7 @@ let lower_eigen_args_to_ref arg_types =
             { decl_adtype= AutoDiffable
             ; decl_type= Unsized ut
             ; decl_id= name
+            ; decl_annotations= []
             ; initialize=
                 Assign (Expr.Helpers.internal_funapp FnToRef [arg] arg.meta) }
       ; meta= Stmt.Numbered.Meta.empty } in

@@ -524,9 +524,11 @@ module TypeError = struct
           ~labels:(previous_declaration prev_decl)
           "Function %a has already been declared. A definition is expected."
           quoted name
-    | FunExternDefined (name, _annotation) ->
-        Fmt.pf ppf "Cannot provide a body for function %a marked with '@@extern'."
-          quoted name
+    | FunExternDefined (name, annotation) ->
+        make_error
+          ~labels:(context annotation "Marked as extern here.")
+          "Cannot provide a body for function %a marked with '@@extern'." quoted
+          name
     | FunDeclNoDefn name ->
         make_error
           "@[<v>Function %a is declared without specifying a definition.@,\

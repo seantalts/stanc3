@@ -1,23 +1,13 @@
 open Ast
 open Std
 
-let unknown_annotation (loc, name) : Warnings.t =
-  (loc, Fmt.str "Unknown annotation '@%s' will be ignored by the compiler." name)
-
-let unsupported_annotation (loc, name, ty) : Warnings.t =
-  ( loc
-  , Fmt.str
-      "Unsupported annotation '@%s' for type %a will be ignored by the \
-       compiler."
-      name Middle.UnsizedType.pp ty )
-
 let get_warnings pred ty anns =
   List.filter_map
     ~f:(fun (a : Middle.Annotation.t) ->
       match pred a.name a.args ty with
       | `Fine -> None
-      | `Unknown -> Some (unknown_annotation (a.loc, a.name))
-      | `WrongType -> Some (unsupported_annotation (a.loc, a.name, ty)))
+      | `Unknown -> Some (Warnings.unknown_annotation a.loc a.name)
+      | `WrongType -> Some (Warnings.unsupported_annotation a.loc a.name ty))
     anns
 
 let rec collect_stmt pred (acc : Warnings.t list) {stmt; _} =

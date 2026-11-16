@@ -475,7 +475,8 @@ and inline_function_arguments fname propto adt fim args es =
                 ; decl_type=
                     Sized (unsafe_unsized_to_sized_type (Unsized e.meta.type_))
                 ; decl_id= temp
-                ; initialize= Uninit } ]
+                ; initialize= Uninit
+                ; decl_annotations= [] } ]
         , stmts
           @ [ Stmt.Pattern.Assignment
                 (Stmt.Helpers.lvariable temp, e.meta.type_, e) ]
@@ -617,7 +618,12 @@ and inline_function_statement propto adt fim Stmt.{pattern; meta} =
             Block (List.map l ~f:(inline_function_statement propto adt fim))
         | SList l ->
             SList (List.map l ~f:(inline_function_statement propto adt fim))
-        | Decl {decl_adtype; decl_id; decl_type; initialize= Assign expr} ->
+        | Decl
+            { decl_adtype
+            ; decl_id
+            ; decl_type
+            ; initialize= Assign expr
+            ; decl_annotations } ->
             let d, s, e = inline_expr expr in
             slist_concat_no_loc (d @ s)
               (Decl

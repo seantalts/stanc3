@@ -19,6 +19,8 @@ type t =
   | FunctionDeprecation of Location_span.t * string * (int * int) * string
   | OdeDeprecation of Location_span.t * string * (int * int) * string
   | Pedantic of Location_span.t * string
+  | UnknownAnnotation of Location_span.t * string
+  | UnsupportedAnnotation of Location_span.t * string * Middle.UnsizedType.t
 
 let stancjs_bad_include msg = StancJsInclude msg
 let jacobian_dataonly loc alt = JacobianFunCallDataOnly (loc, alt)
@@ -40,6 +42,8 @@ let ode_deprecation loc name version rename =
   OdeDeprecation (loc, name, version, rename)
 
 let pedantic_warning (span, msg) = Pedantic (span, msg)
+let unknown_annotation loc name = UnknownAnnotation (loc, name)
+let unsupported_annotation loc name ty = UnsupportedAnnotation (loc, name, ty)
 
 let canonicalize =
   Grace.Diagnostic.Message.createf "%a" Fmt.text
@@ -58,6 +62,16 @@ let to_grace ?printed_filename ?code warn =
            "@[<v>stanc.js failed to parse included file mapping:@ %s@]" msg)
   | Pedantic (loc, msg) ->
       make_warning loc "%a" Fmt.lines (Fmt.str "@[%a@]" Fmt.text msg)
+  | UnknownAnnotation (loc, name) ->
+      let notes = [Message.create "This will be ignored by the compiler."] in
+      let summary = Message.createf "Unknown annotation '@@%s'." name in
+      make_warning loc ~notes ~summary "Unknown annotation."
+  | UnsupportedAnnotation (loc, name, ty) ->
+      let notes = [Message.create "This will be ignored by the compiler."] in
+      let summary =
+        Message.createf "Unsupported annotation '@@%s' for type %a." name
+          Middle.UnsizedType.pp ty in
+      make_warning loc ~notes ~summary "Unsupported annotation."
   | EmptyFile loc ->
       let summary =
         Message.create

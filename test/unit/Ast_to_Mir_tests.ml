@@ -37,32 +37,33 @@ let%expect_test "Prefix-Op-Example" =
   (* Perhaps this is producing too many nested lists. XXX *)
   [%expect
     {|
-      (((pattern
-         (Block
-          (((pattern
-             (Decl (decl_adtype AutoDiffable) (decl_id i) (decl_type (Sized SInt))
-              (initialize Default)))
-            (meta <opaque>))
-           ((pattern
-             (IfElse
-              ((pattern
-                (FunApp (Operator Less)
-                 (((pattern (Var i))
-                   (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
-                  ((pattern
-                    (FunApp (Operator PMinus)
-                     (((pattern (Lit Int 1))
-                       (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-                   (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
-               (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
-              ((pattern
-                (NRFunApp (CompilerInternal FnPrint)
-                 (((pattern (Lit Str Badger))
-                   (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly)))))))
-               (meta <opaque>))
-              ()))
-            (meta <opaque>)))))
-        (meta <opaque>))) |}]
+    (((pattern
+       (Block
+        (((pattern
+           (Decl (decl_adtype AutoDiffable) (decl_id i) (decl_type (Sized SInt))
+            (initialize Default) (decl_annotations ())))
+          (meta <opaque>))
+         ((pattern
+           (IfElse
+            ((pattern
+              (FunApp (Operator Less)
+               (((pattern (Var i))
+                 (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+                ((pattern
+                  (FunApp (Operator PMinus)
+                   (((pattern (Lit Int 1))
+                     (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+                 (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly)))))))
+             (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
+            ((pattern
+              (NRFunApp (CompilerInternal FnPrint)
+               (((pattern (Lit Str Badger))
+                 (meta ((type_ UReal) (loc <opaque>) (adlevel DataOnly)))))))
+             (meta <opaque>))
+            ()))
+          (meta <opaque>)))))
+      (meta <opaque>)))
+    |}]
 
 let%expect_test "read data" =
   let m = Test_utils.mir_of_string "data { array[5] matrix[10, 20] mat; }" in
