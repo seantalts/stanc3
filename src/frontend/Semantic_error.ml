@@ -532,9 +532,9 @@ module TypeError = struct
     | FunDeclNoDefn name ->
         make_error
           "@[<v>Function %a is declared without specifying a definition.@,\
-           If this function will be supplied elsewhere after compilation (e.g., \
-           it is being manually implemented in C++) consider marking it with \
-           '@@extern' to silence this error.@]"
+           If this function will be supplied elsewhere after compilation \
+           (e.g., it is being manually implemented in C++) consider marking it \
+           with '@@extern' to silence this error.@]"
           quoted name
     | NonRealProbFunDef Void ->
         make_error

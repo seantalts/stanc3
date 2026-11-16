@@ -29,6 +29,7 @@ val unknown_annotation : Location_span.t -> string -> t
 
 val unsupported_annotation :
   Location_span.t -> string -> Middle.UnsizedType.t -> t
+
 val pp : ?printed_filename:string -> ?code:string -> t Fmt.t
 val pp_warnings : ?printed_filename:string -> ?code:string -> t list Fmt.t
 
