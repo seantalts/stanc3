@@ -11,7 +11,7 @@ let rec transpose = function
 let reject loc msg = raise (Partial_evaluator.Rejected (loc, msg))
 
 let dotproduct xs ys =
-  List.fold_left2 xs ys ~init:0. ~f:(fun accum x y -> accum +. (x *. y))
+  List.fold_left2 xs ys ~init:0. ~f:(fun accum x y -> accum +. Sys.opaque_identity (x *. y))
 
 let matprod x y =
   let y_T = transpose y in
