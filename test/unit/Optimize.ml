@@ -4312,3 +4312,30 @@ let%expect_test "inlined calls with only data actuals are data" =
       target += normal_lupdf(tau, promote(0, real, data), inline_widen_return34__);
     }
     |}]
+
+let%expect_test "dead code elimination keeps an unused draw" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      generated quantities {
+        real b;
+        {
+          real a = normal_rng(0, 1);
+          b = normal_rng(10, 1);
+        }
+      }
+      |}
+  in
+  let mir = dead_code_elimination mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.generate_quantities
+  |> print_endline;
+  [%expect {|
+    if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+    if(!(emit_generated_quantities__)) return;
+    data real b;
+    {
+      data real a;
+      a = normal_rng(0, 1);
+      b = normal_rng(10, 1);
+    }
+    |}]

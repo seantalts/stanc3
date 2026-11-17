@@ -37,7 +37,16 @@ let cannot_duplicate_expr ?(preserve_stability = false) (e : Expr.Typed.t) =
     || (preserve_stability && UnsizedType.is_autodiffable e.meta.type_) in
   expr_any pred e
 
-let cannot_remove_expr (e : Expr.Typed.t) = expr_any can_side_effect_top_expr e
+(* A draw advances the RNG stream, so removing an unused one changes every
+   later draw. *)
+let cannot_remove_expr (e : Expr.Typed.t) =
+  let pred e =
+    can_side_effect_top_expr e
+    ||
+    match e.pattern with
+    | FunApp ((UserDefined (_, FnRng) | StanLib (_, FnRng)), _) -> true
+    | _ -> false in
+  expr_any pred e
 
 let rec fold_expr ~take_expr ~(init : 'c) (expr : Expr.Typed.t) : 'c =
   Expr.Pattern.fold
