@@ -459,10 +459,6 @@ and inline_function_arguments fname propto adt fim args es =
     let e = refresh_adlevel e in
     match e.pattern with
     | Var _ | Lit _ -> (decls, stmts, e)
-    | _ when UnsizedType.contains_tuple e.meta.type_ ->
-        (* stanli has no tuple-typed locals, so a tuple argument stays
-           substituted *)
-        (decls, stmts, e)
     | _ ->
         (* nontrivial function arguments get bound to a variable to avoid
            re-evaluation. The assignment goes with the argument's statements,
