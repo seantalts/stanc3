@@ -4339,3 +4339,46 @@ let%expect_test "dead code elimination keeps an unused draw" =
       b = normal_rng(10, 1);
     }
     |}]
+
+let%expect_test "dead code elimination keeps size and index checks" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      parameters {
+        real x;
+      }
+      model {
+        matrix[2, 3] z = [[1, 2, 3, 4], [4, 5, 6, 8]];
+        array[2] real a;
+        a[3] = 1;
+        vector[0] v;
+        v = rep_vector(1, 3);
+        v = rep_vector(1, 4);
+        real b = 1;
+        x ~ normal(0, 5);
+      }
+      |}
+  in
+  let mir = dead_code_elimination mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
+  [%expect {|
+    real x;
+    {
+      matrix[2, 3] z;
+      z = FnMakeRowVec__(FnMakeRowVec__(promote(1, real, data),
+                                        promote(2, real, data),
+                                        promote(3, real, data),
+                                        promote(4, real, data)),
+                         FnMakeRowVec__(promote(4, real, data),
+                                        promote(5, real, data),
+                                        promote(6, real, data),
+                                        promote(8, real, data)));
+      array[real, 2] a;
+      a[3] = promote(1, real, var);
+      vector[0] v;
+      v = rep_vector(promote(1, real, data), 3);
+      v = rep_vector(promote(1, real, data), 4);
+      real b;
+      target += normal_lupdf(x, promote(0, real, data), promote(5, real, data));
+    }
+    |}]

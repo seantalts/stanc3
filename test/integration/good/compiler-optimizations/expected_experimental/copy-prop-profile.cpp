@@ -5,18 +5,20 @@ namespace copy_prop_profile_model_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 16> locations_array__ =
+static constexpr std::array<const char*, 18> locations_array__ =
   {" (found before start of program)",
   " (in '../copy-prop-profile.stan', line 5, column 2 to column 16)",
   " (in '../copy-prop-profile.stan', line 9, column 13 to column 14)",
   " (in '../copy-prop-profile.stan', line 9, column 2 to column 20)",
   " (in '../copy-prop-profile.stan', line 12, column 15 to column 16)",
   " (in '../copy-prop-profile.stan', line 12, column 4 to column 45)",
+  " (in '../copy-prop-profile.stan', line 13, column 4 to column 15)",
   " (in '../copy-prop-profile.stan', line 11, column 2 to line 14, column 3)",
   " (in '../copy-prop-profile.stan', line 18, column 13 to column 14)",
   " (in '../copy-prop-profile.stan', line 18, column 2 to column 21)",
   " (in '../copy-prop-profile.stan', line 20, column 15 to column 16)",
   " (in '../copy-prop-profile.stan', line 20, column 4 to column 45)",
+  " (in '../copy-prop-profile.stan', line 21, column 4 to column 16)",
   " (in '../copy-prop-profile.stan', line 19, column 2 to line 22, column 3)",
   " (in '../copy-prop-profile.stan', line 24, column 2 to column 22)",
   " (in '../copy-prop-profile.stan', line 2, column 2 to column 17)",
@@ -45,17 +47,17 @@ class copy_prop_profile_model final : public model_base_crtp<copy_prop_profile_m
     // suppress unused var warning
     (void) DUMMY_VAR__;
     try {
-      current_statement__ = 13;
+      current_statement__ = 15;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 13;
-      stan::io::read_from_context(N, context__, "N");
-      current_statement__ = 13;
-      stan::math::check_greater_or_equal(function__, "N", N, 0);
-      current_statement__ = 14;
-      stan::math::validate_non_negative_index("X", "N", N);
       current_statement__ = 15;
+      stan::io::read_from_context(N, context__, "N");
+      current_statement__ = 15;
+      stan::math::check_greater_or_equal(function__, "N", N, 0);
+      current_statement__ = 16;
+      stan::math::validate_non_negative_index("X", "N", N);
+      current_statement__ = 17;
       stan::math::validate_non_negative_index("X", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -101,36 +103,38 @@ class copy_prop_profile_model final : public model_base_crtp<copy_prop_profile_m
       {
         current_statement__ = 2;
         stan::math::validate_non_negative_index("vec", "N", N);
-        Eigen::Matrix<double,1,-1> vec =
-          Eigen::Matrix<double,1,-1>::Constant(N,
-            std::numeric_limits<double>::quiet_NaN());
-        current_statement__ = 6;
+        Eigen::Matrix<local_scalar_t__,1,-1> vec =
+          Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
+        current_statement__ = 7;
         {
           stan::math::profile<local_scalar_t__> profile__("test",
             const_cast<stan::math::profile_map&>(profiles__));
           current_statement__ = 4;
           stan::math::validate_non_negative_index("vec2", "N", N);
-          Eigen::Matrix<double,1,-1> vec2 =
-            Eigen::Matrix<double,1,-1>::Constant(N,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,1,-1> vec2 =
+            Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
           stan::model::assign(lcm5__, stan::math::columns_dot_self(X),
             "assigning variable lcm5__");
+          stan::model::assign(vec2, lcm5__, "assigning variable vec2");
+          current_statement__ = 6;
+          stan::model::assign(vec, lcm5__, "assigning variable vec");
         }
         lcm6__ = stan::math::sum(lcm5__);
         lp_accum__.add(lcm6__);
-        current_statement__ = 7;
+        current_statement__ = 8;
         stan::math::validate_non_negative_index("vec3", "N", N);
-        Eigen::Matrix<double,1,-1> vec3 =
-          Eigen::Matrix<double,1,-1>::Constant(N,
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<local_scalar_t__,1,-1> vec3 =
+          Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
         {
-          current_statement__ = 9;
+          current_statement__ = 10;
           stan::math::validate_non_negative_index("vec4", "N", N);
-          Eigen::Matrix<double,1,-1> vec4 =
-            Eigen::Matrix<double,1,-1>::Constant(N,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,1,-1> vec4;
+          current_statement__ = 11;
+          stan::model::assign(vec4, lcm5__, "assigning variable vec4");
+          current_statement__ = 12;
+          stan::model::assign(vec3, lcm5__, "assigning variable vec3");
         }
-        current_statement__ = 12;
+        current_statement__ = 14;
         lp_accum__.add(lcm6__);
       }
     } catch (const std::exception& e) {
@@ -171,36 +175,38 @@ class copy_prop_profile_model final : public model_base_crtp<copy_prop_profile_m
       {
         current_statement__ = 2;
         stan::math::validate_non_negative_index("vec", "N", N);
-        Eigen::Matrix<double,1,-1> vec =
-          Eigen::Matrix<double,1,-1>::Constant(N,
-            std::numeric_limits<double>::quiet_NaN());
-        current_statement__ = 6;
+        Eigen::Matrix<local_scalar_t__,1,-1> vec =
+          Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
+        current_statement__ = 7;
         {
           stan::math::profile<local_scalar_t__> profile__("test",
             const_cast<stan::math::profile_map&>(profiles__));
           current_statement__ = 4;
           stan::math::validate_non_negative_index("vec2", "N", N);
-          Eigen::Matrix<double,1,-1> vec2 =
-            Eigen::Matrix<double,1,-1>::Constant(N,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,1,-1> vec2 =
+            Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
           stan::model::assign(lcm3__, stan::math::columns_dot_self(X),
             "assigning variable lcm3__");
+          stan::model::assign(vec2, lcm3__, "assigning variable vec2");
+          current_statement__ = 6;
+          stan::model::assign(vec, lcm3__, "assigning variable vec");
         }
         lcm4__ = stan::math::sum(lcm3__);
         lp_accum__.add(lcm4__);
-        current_statement__ = 7;
+        current_statement__ = 8;
         stan::math::validate_non_negative_index("vec3", "N", N);
-        Eigen::Matrix<double,1,-1> vec3 =
-          Eigen::Matrix<double,1,-1>::Constant(N,
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<local_scalar_t__,1,-1> vec3 =
+          Eigen::Matrix<local_scalar_t__,1,-1>::Constant(N, DUMMY_VAR__);
         {
-          current_statement__ = 9;
+          current_statement__ = 10;
           stan::math::validate_non_negative_index("vec4", "N", N);
-          Eigen::Matrix<double,1,-1> vec4 =
-            Eigen::Matrix<double,1,-1>::Constant(N,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,1,-1> vec4;
+          current_statement__ = 11;
+          stan::model::assign(vec4, lcm3__, "assigning variable vec4");
+          current_statement__ = 12;
+          stan::model::assign(vec3, lcm3__, "assigning variable vec3");
         }
-        current_statement__ = 12;
+        current_statement__ = 14;
         lp_accum__.add(lcm4__);
       }
     } catch (const std::exception& e) {

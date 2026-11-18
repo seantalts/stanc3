@@ -11,12 +11,12 @@ static constexpr std::array<const char*, 14> locations_array__ =
   " (in '../inline-functions-varmat.stan', line 17, column 1 to column 27)",
   " (in '../inline-functions-varmat.stan', line 21, column 2 to column 65)",
   " (in '../inline-functions-varmat.stan', line 22, column 2 to column 62)",
+  " (in '../inline-functions-varmat.stan', line 3, column 4 to column 13)",
   " (in '../inline-functions-varmat.stan', line 6, column 4 to column 16)",
   " (in '../inline-functions-varmat.stan', line 9, column 11 to line 11, column 5)",
   " (in '../inline-functions-varmat.stan', line 7, column 20 to line 9, column 5)",
   " (in '../inline-functions-varmat.stan', line 7, column 4 to line 11, column 5)",
   " (in '../inline-functions-varmat.stan', line 5, column 33 to line 12, column 3)",
-  " (in '../inline-functions-varmat.stan', line 3, column 4 to column 13)",
   " (in '../inline-functions-varmat.stan', line 2, column 34 to line 4, column 3)",
   " (in '../inline-functions-varmat.stan', line 10, column 6 to column 15)",
   " (in '../inline-functions-varmat.stan', line 8, column 6 to column 15)"};
@@ -48,7 +48,7 @@ single_ret_fun(const T0__& A_arg__, std::ostream* pstream__) {
   // suppress unused var warning
   (void) DUMMY_VAR__;
   try {
-    current_statement__ = 10;
+    current_statement__ = 5;
     return A;
   } catch (const std::exception& e) {
     stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -76,7 +76,7 @@ multi_ret_fun(const T0__& A_arg__, std::ostream* pstream__) {
     {
       Eigen::Matrix<local_scalar_t__,-1,1> B =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(5, DUMMY_VAR__);
-      current_statement__ = 8;
+      current_statement__ = 9;
       if (stan::math::logical_gt(
             stan::model::rvalue(A, "A", stan::model::index_uni(0)), 1.0)) {
         current_statement__ = 13;
@@ -154,7 +154,13 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         in__.template read<Eigen::Matrix<local_scalar_t__,-1,1>>(5);
       Eigen::Matrix<local_scalar_t__,-1,1> tp_single_ret_vec =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(5, DUMMY_VAR__);
-      Eigen::Matrix<double,-1,1> inline_single_ret_fun_return13__;
+      Eigen::Matrix<local_scalar_t__,-1,1> inline_single_ret_fun_return13__;
+      {
+        current_statement__ = 5;
+        stan::model::assign(inline_single_ret_fun_return13__,
+          p_single_ret_vec,
+          "assigning variable inline_single_ret_fun_return13__");
+      }
       stan::model::assign(tp_single_ret_vec, p_single_ret_vec,
         "assigning variable tp_single_ret_vec");
       Eigen::Matrix<local_scalar_t__,-1,1> tp_multi_ret_vec =
@@ -167,7 +173,7 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         Eigen::Matrix<double,-1,1> inline_multi_ret_fun_B16__ =
           Eigen::Matrix<double,-1,1>::Constant(5,
             std::numeric_limits<double>::quiet_NaN());
-        current_statement__ = 8;
+        current_statement__ = 9;
         if (stan::math::logical_gt(
               stan::model::rvalue(p_multi_ret_vec, "p_multi_ret_vec",
                 stan::model::index_uni(0)), 1.0)) {
@@ -227,7 +233,14 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         stan::math::var_value<Eigen::Matrix<double,-1,1>>(Eigen::Matrix<double,-1,1>::Constant(5,
                                                             std::numeric_limits<double>::quiet_NaN(
                                                               )));
-      Eigen::Matrix<double,-1,1> inline_single_ret_fun_return7__;
+      stan::math::var_value<Eigen::Matrix<double,-1,1>>
+        inline_single_ret_fun_return7__;
+      {
+        current_statement__ = 5;
+        stan::model::assign(inline_single_ret_fun_return7__,
+          p_single_ret_vec,
+          "assigning variable inline_single_ret_fun_return7__");
+      }
       stan::model::assign(tp_single_ret_vec, p_single_ret_vec,
         "assigning variable tp_single_ret_vec");
       stan::math::var_value<Eigen::Matrix<double,-1,1>> tp_multi_ret_vec =
@@ -243,7 +256,7 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         Eigen::Matrix<double,-1,1> inline_multi_ret_fun_B10__ =
           Eigen::Matrix<double,-1,1>::Constant(5,
             std::numeric_limits<double>::quiet_NaN());
-        current_statement__ = 8;
+        current_statement__ = 9;
         if (stan::math::logical_gt(
               stan::model::rvalue(p_multi_ret_vec, "p_multi_ret_vec",
                 stan::model::index_uni(0)), 1.0)) {
@@ -324,6 +337,12 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         return ;
       }
       Eigen::Matrix<double,-1,1> inline_single_ret_fun_return1__;
+      {
+        current_statement__ = 5;
+        stan::model::assign(inline_single_ret_fun_return1__,
+          p_single_ret_vec,
+          "assigning variable inline_single_ret_fun_return1__");
+      }
       stan::model::assign(tp_single_ret_vec, p_single_ret_vec,
         "assigning variable tp_single_ret_vec");
       Eigen::Matrix<double,-1,1> inline_multi_ret_fun_return3__;
@@ -334,7 +353,7 @@ class inline_functions_varmat_model final : public model_base_crtp<inline_functi
         Eigen::Matrix<double,-1,1> inline_multi_ret_fun_B4__ =
           Eigen::Matrix<double,-1,1>::Constant(5,
             std::numeric_limits<double>::quiet_NaN());
-        current_statement__ = 8;
+        current_statement__ = 9;
         if (stan::math::logical_gt(
               stan::model::rvalue(p_multi_ret_vec, "p_multi_ret_vec",
                 stan::model::index_uni(0)), 1.0)) {

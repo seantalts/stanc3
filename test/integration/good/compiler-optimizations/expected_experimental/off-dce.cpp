@@ -550,6 +550,7 @@ class off_dce_model final : public model_base_crtp<off_dce_model> {
                   stan::model::rvalue(lcm8__, "lcm8__",
                     stan::model::index_uni(1))))),
             "assigning variable lcm18__");
+          stan::model::assign(q, lcm18__, "assigning variable q");
           double qT = std::numeric_limits<double>::quiet_NaN();
           lcm7__ = stan::math::prod(lcm18__);
           stan::model::assign(psi_con, ((lcm5__ * lcm7__) /
@@ -589,6 +590,7 @@ class off_dce_model final : public model_base_crtp<off_dce_model> {
                     stan::model::rvalue(lcm8__, "lcm8__",
                       stan::model::index_uni(i))))),
               "assigning variable lcm17__");
+            stan::model::assign(q, lcm17__, "assigning variable q");
             double qT = std::numeric_limits<double>::quiet_NaN();
             lcm6__ = stan::math::prod(lcm17__);
             current_statement__ = 20;

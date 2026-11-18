@@ -123,9 +123,9 @@ class partial_eval_multiply_model final : public model_base_crtp<partial_eval_mu
       auto m3 =
         in__.template read<Eigen::Matrix<local_scalar_t__,-1,-1>>(10, 10);
       {
-        Eigen::Matrix<double,-1,-1> m5 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<local_scalar_t__,-1,-1> m5 =
+          Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(10, 10,
+            DUMMY_VAR__);
         stan::model::assign(lcm8__,
           stan::math::add(
             stan::math::multiply(m1,
@@ -133,14 +133,16 @@ class partial_eval_multiply_model final : public model_base_crtp<partial_eval_mu
                 stan::model::rvalue(m3, "m3", stan::model::index_multi(idx),
                   stan::model::index_multi(idy)))), m4),
           "assigning variable lcm8__");
-        Eigen::Matrix<double,-1,-1> m6 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        stan::model::assign(m5, lcm8__, "assigning variable m5");
+        Eigen::Matrix<local_scalar_t__,-1,-1> m6 =
+          Eigen::Matrix<local_scalar_t__,-1,-1>::Constant(10, 10,
+            DUMMY_VAR__);
         stan::model::assign(lcm6__, stan::math::fma(m1, m2, m4),
           "assigning variable lcm6__");
-        Eigen::Matrix<double,-1,-1> m7 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        stan::model::assign(m6, lcm6__, "assigning variable m6");
+        Eigen::Matrix<local_scalar_t__,-1,-1> m7;
+        current_statement__ = 5;
+        stan::model::assign(m7, lcm6__, "assigning variable m7");
         current_statement__ = 6;
         lp_accum__.add(((stan::math::sum(lcm8__) + stan::math::sum(lcm6__)) +
           stan::math::sum(lcm6__)));
@@ -187,9 +189,11 @@ class partial_eval_multiply_model final : public model_base_crtp<partial_eval_mu
         in__.template read<
           stan::math::var_value<Eigen::Matrix<double,-1,-1>>>(10, 10);
       {
-        Eigen::Matrix<double,-1,-1> m5 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        stan::math::var_value<Eigen::Matrix<double,-1,-1>> m5 =
+          stan::math::var_value<Eigen::Matrix<double,-1,-1>>(Eigen::Matrix<double,-1,-1>::Constant(10,
+                                                               10,
+                                                               std::numeric_limits<double>::quiet_NaN(
+                                                                 )));
         stan::model::assign(lcm5__,
           stan::math::add(
             stan::math::multiply(m1,
@@ -197,14 +201,18 @@ class partial_eval_multiply_model final : public model_base_crtp<partial_eval_mu
                 stan::model::rvalue(m3, "m3", stan::model::index_multi(idx),
                   stan::model::index_multi(idy)))), m4),
           "assigning variable lcm5__");
-        Eigen::Matrix<double,-1,-1> m6 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        stan::model::assign(m5, lcm5__, "assigning variable m5");
+        stan::math::var_value<Eigen::Matrix<double,-1,-1>> m6 =
+          stan::math::var_value<Eigen::Matrix<double,-1,-1>>(Eigen::Matrix<double,-1,-1>::Constant(10,
+                                                               10,
+                                                               std::numeric_limits<double>::quiet_NaN(
+                                                                 )));
         stan::model::assign(lcm3__, stan::math::fma(m1, m2, m4),
           "assigning variable lcm3__");
-        Eigen::Matrix<double,-1,-1> m7 =
-          Eigen::Matrix<double,-1,-1>::Constant(10, 10,
-            std::numeric_limits<double>::quiet_NaN());
+        stan::model::assign(m6, lcm3__, "assigning variable m6");
+        stan::math::var_value<Eigen::Matrix<double,-1,-1>> m7;
+        current_statement__ = 5;
+        stan::model::assign(m7, lcm3__, "assigning variable m7");
         current_statement__ = 6;
         lp_accum__.add(((stan::math::sum(lcm5__) + stan::math::sum(lcm3__)) +
           stan::math::sum(lcm3__)));

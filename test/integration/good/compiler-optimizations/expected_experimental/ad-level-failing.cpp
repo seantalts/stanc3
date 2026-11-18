@@ -326,13 +326,14 @@ class ad_level_failing_model final : public model_base_crtp<ad_level_failing_mod
         std::vector<std::vector<local_scalar_t__>>(N_t,
           std::vector<local_scalar_t__>(4, DUMMY_VAR__));
       {
-        std::vector<double> theta =
-          std::vector<double>(5, std::numeric_limits<double>::quiet_NaN());
+        std::vector<local_scalar_t__> theta =
+          std::vector<local_scalar_t__>(5, DUMMY_VAR__);
         stan::model::assign(lcm35__,
           std::vector<local_scalar_t__>{beta,
             stan::math::promote_scalar<local_scalar_t__>(
               static_cast<double>(1000000)), gamma, xi, delta},
           "assigning variable lcm35__");
+        stan::model::assign(theta, lcm35__, "assigning variable theta");
         stan::model::assign(lcm29__,
           stan::math::integrate_ode_rk45(simple_SIR_functor__(), y0,
             static_cast<double>(0), t, lcm35__, x_r, x_i, pstream__),
@@ -455,13 +456,14 @@ class ad_level_failing_model final : public model_base_crtp<ad_level_failing_mod
         std::vector<std::vector<local_scalar_t__>>(N_t,
           std::vector<local_scalar_t__>(4, DUMMY_VAR__));
       {
-        std::vector<double> theta =
-          std::vector<double>(5, std::numeric_limits<double>::quiet_NaN());
+        std::vector<local_scalar_t__> theta =
+          std::vector<local_scalar_t__>(5, DUMMY_VAR__);
         stan::model::assign(lcm24__,
           std::vector<local_scalar_t__>{beta,
             stan::math::promote_scalar<local_scalar_t__>(
               static_cast<double>(1000000)), gamma, xi, delta},
           "assigning variable lcm24__");
+        stan::model::assign(theta, lcm24__, "assigning variable theta");
         stan::model::assign(lcm18__,
           stan::math::integrate_ode_rk45(simple_SIR_functor__(), y0,
             static_cast<double>(0), t, lcm24__, x_r, x_i, pstream__),
@@ -607,6 +609,7 @@ class ad_level_failing_model final : public model_base_crtp<ad_level_failing_mod
         stan::model::assign(lcm9__,
           std::vector<double>{beta, static_cast<double>(1000000), gamma, xi,
             delta}, "assigning variable lcm9__");
+        stan::model::assign(theta, lcm9__, "assigning variable theta");
         stan::model::assign(lcm5__,
           stan::math::integrate_ode_rk45(simple_SIR_functor__(), y0,
             static_cast<double>(0), t, lcm9__, x_r, x_i, pstream__),

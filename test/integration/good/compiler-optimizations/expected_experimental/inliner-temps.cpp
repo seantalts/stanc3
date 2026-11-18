@@ -331,6 +331,8 @@ class inliner_temps_model final : public model_base_crtp<inliner_temps_model> {
       Eigen::Matrix<double,-1,-1> inline_sign_fix_return4__;
       stan::model::assign(lcm12__, stan::math::multiply(L, U),
         "assigning variable lcm12__");
+      stan::model::assign(inline_sign_fix_a_arg5__, lcm12__,
+        "assigning variable inline_sign_fix_a_arg5__");
       {
         int inline_sign_fix_d6__ = std::numeric_limits<int>::min();
         lcm8__ = stan::math::rows(lcm12__);

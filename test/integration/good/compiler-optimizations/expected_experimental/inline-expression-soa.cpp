@@ -105,13 +105,17 @@ class inline_expression_soa_model final : public model_base_crtp<inline_expressi
       auto p =
         in__.template read<Eigen::Matrix<local_scalar_t__,-1,-1>>(10, 10);
       {
-        Eigen::Matrix<double,-1,-1> inline_foo_i_arg5__;
-        Eigen::Matrix<double,-1,-1> inline_foo_return4__;
+        Eigen::Matrix<local_scalar_t__,-1,-1> inline_foo_i_arg5__;
+        Eigen::Matrix<local_scalar_t__,-1,-1> inline_foo_return4__;
         stan::model::assign(lcm8__, stan::math::add(p, p),
           "assigning variable lcm8__");
+        stan::model::assign(inline_foo_i_arg5__, lcm8__,
+          "assigning variable inline_foo_i_arg5__");
         {
           stan::model::assign(lcm9__, stan::math::multiply(lcm8__, lcm8__),
             "assigning variable lcm9__");
+          stan::model::assign(inline_foo_return4__, lcm9__,
+            "assigning variable inline_foo_return4__");
         }
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
                          stan::math::to_vector(lcm9__)));
@@ -154,13 +158,18 @@ class inline_expression_soa_model final : public model_base_crtp<inline_expressi
         in__.template read<
           stan::math::var_value<Eigen::Matrix<double,-1,-1>>>(10, 10);
       {
-        Eigen::Matrix<double,-1,-1> inline_foo_i_arg2__;
-        Eigen::Matrix<double,-1,-1> inline_foo_return1__;
+        stan::math::var_value<Eigen::Matrix<double,-1,-1>> inline_foo_i_arg2__;
+        stan::math::var_value<Eigen::Matrix<double,-1,-1>>
+          inline_foo_return1__;
         stan::model::assign(lcm5__, stan::math::add(p, p),
           "assigning variable lcm5__");
+        stan::model::assign(inline_foo_i_arg2__, lcm5__,
+          "assigning variable inline_foo_i_arg2__");
         {
           stan::model::assign(lcm6__, stan::math::multiply(lcm5__, lcm5__),
             "assigning variable lcm6__");
+          stan::model::assign(inline_foo_return1__, lcm6__,
+            "assigning variable inline_foo_return1__");
         }
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
                          stan::math::to_vector(lcm6__)));

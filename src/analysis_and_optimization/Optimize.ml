@@ -1118,6 +1118,25 @@ let copy_propagation mir =
 let is_skip_break_continue s =
   match s with Stmt.Pattern.Skip | Break | Continue -> true | _ -> false
 
+let rec type_has_size (t : UnsizedType.t) =
+  match t with
+  | UArray _ -> true
+  | UTuple ts -> List.exists ~f:type_has_size ts
+  | t -> UnsizedType.is_eigen_type t
+
+let rec lvalue_has_index ((lv, idxs) : 'e Stmt.Pattern.lvalue) =
+  (not (List.is_empty idxs))
+  ||
+  match lv with
+  | LVariable _ -> false
+  | LTupleProjection (lv, _) -> lvalue_has_index lv
+
+(* Assigning to a vector, matrix or array checks the size of the right-hand
+   side, and an index checks its bounds. Either check can throw, so removing the
+   assignment could remove an error. *)
+let assignment_can_throw lhs (t : UnsizedType.t) =
+  type_has_size t || lvalue_has_index lhs
+
 (* TODO: could also implement partial dead code elimination *)
 let dead_code_elimination (mir : Program.Typed.t) =
   (* TODO: think about whether we should treat function bodies as local scopes
@@ -1144,10 +1163,10 @@ let dead_code_elimination (mir : Program.Typed.t) =
       let is_live x =
         Set.Poly.mem x live_variables_s || Set.Poly.mem x globals in
       match stmt with
-      | Stmt.Pattern.Assignment (lhs, _, rhs) ->
+      | Stmt.Pattern.Assignment (lhs, t, rhs) ->
           if
             is_live (Stmt.Helpers.lhs_variable lhs)
-            || cannot_remove_expr rhs
+            || assignment_can_throw lhs t || cannot_remove_expr rhs
             || List.exists
                  ~f:(idx_any cannot_remove_expr)
                  (Stmt.Helpers.lhs_indices lhs)

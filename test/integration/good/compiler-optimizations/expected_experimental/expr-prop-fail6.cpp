@@ -537,6 +537,7 @@ js_super_lp(const T0__& y, const T1__& first, const T2__& last, const T3__&
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm71__, DUMMY_VAR__);
       stan::model::assign(lcm53__, stan::math::subtract(1.0, nu),
         "assigning variable lcm53__");
+      stan::model::assign(qnu, lcm53__, "assigning variable qnu");
       current_statement__ = 110;
       if (stan::math::logical_gte(lcm70__, 1)) {
         current_statement__ = 83;
@@ -549,6 +550,7 @@ js_super_lp(const T0__& y, const T1__& first, const T2__& last, const T3__&
             stan::math::transpose(
               stan::model::rvalue(p, "p", stan::model::index_uni(1)))),
           "assigning variable lcm55__");
+        stan::model::assign(qp, lcm55__, "assigning variable qp");
         lcm67__ = stan::model::rvalue(first, "first",
                     stan::model::index_uni(1));
         if (lcm67__) {
@@ -760,6 +762,7 @@ js_super_lp(const T0__& y, const T1__& first, const T2__& last, const T3__&
               stan::math::transpose(
                 stan::model::rvalue(p, "p", stan::model::index_uni(i)))),
             "assigning variable lcm54__");
+          stan::model::assign(qp, lcm54__, "assigning variable qp");
           lcm66__ = stan::model::rvalue(first, "first",
                       stan::model::index_uni(i));
           if (lcm66__) {
@@ -1507,24 +1510,28 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
           current_statement__ = 81;
           stan::math::validate_non_negative_index("qnu", "n_occasions",
             lcm277__);
-          Eigen::Matrix<double,-1,1> inline_js_super_lp_qnu44__ =
-            Eigen::Matrix<double,-1,1>::Constant(lcm277__,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,-1,1> inline_js_super_lp_qnu44__ =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm277__,
+              DUMMY_VAR__);
           stan::model::assign(lcm250__, stan::math::subtract(1.0, nu),
             "assigning variable lcm250__");
+          stan::model::assign(inline_js_super_lp_qnu44__, lcm250__,
+            "assigning variable inline_js_super_lp_qnu44__");
           current_statement__ = 110;
           if (stan::math::logical_gte(lcm276__, 1)) {
             current_statement__ = 83;
             stan::math::validate_non_negative_index("qp", "n_occasions",
               lcm277__);
-            Eigen::Matrix<double,-1,1> inline_js_super_lp_qp45__ =
-              Eigen::Matrix<double,-1,1>::Constant(lcm277__,
-                std::numeric_limits<double>::quiet_NaN());
+            Eigen::Matrix<local_scalar_t__,-1,1> inline_js_super_lp_qp45__ =
+              Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm277__,
+                DUMMY_VAR__);
             stan::model::assign(lcm252__,
               stan::math::subtract(1.0,
                 stan::math::transpose(
                   stan::model::rvalue(p, "p", stan::model::index_uni(1)))),
               "assigning variable lcm252__");
+            stan::model::assign(inline_js_super_lp_qp45__, lcm252__,
+              "assigning variable inline_js_super_lp_qp45__");
             lcm273__ = stan::model::rvalue(first, "first",
                          stan::model::index_uni(1));
             if (lcm273__) {
@@ -1759,15 +1766,18 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
               current_statement__ = 83;
               stan::math::validate_non_negative_index("qp", "n_occasions",
                 lcm277__);
-              Eigen::Matrix<double,-1,1> inline_js_super_lp_qp45__ =
-                Eigen::Matrix<double,-1,1>::Constant(lcm277__,
-                  std::numeric_limits<double>::quiet_NaN());
+              Eigen::Matrix<local_scalar_t__,-1,1>
+                inline_js_super_lp_qp45__ =
+                Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm277__,
+                  DUMMY_VAR__);
               stan::model::assign(lcm251__,
                 stan::math::subtract(1.0,
                   stan::math::transpose(
                     stan::model::rvalue(p, "p",
                       stan::model::index_uni(inline_js_super_lp_i49__)))),
                 "assigning variable lcm251__");
+              stan::model::assign(inline_js_super_lp_qp45__, lcm251__,
+                "assigning variable inline_js_super_lp_qp45__");
               lcm272__ = first[(inline_js_super_lp_i49__ - 1)];
               if (lcm272__) {
                 current_statement__ = 93;
@@ -2398,24 +2408,28 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
           current_statement__ = 81;
           stan::math::validate_non_negative_index("qnu", "n_occasions",
             lcm203__);
-          Eigen::Matrix<double,-1,1> inline_js_super_lp_qnu26__ =
-            Eigen::Matrix<double,-1,1>::Constant(lcm203__,
-              std::numeric_limits<double>::quiet_NaN());
+          Eigen::Matrix<local_scalar_t__,-1,1> inline_js_super_lp_qnu26__ =
+            Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm203__,
+              DUMMY_VAR__);
           stan::model::assign(lcm176__, stan::math::subtract(1.0, nu),
             "assigning variable lcm176__");
+          stan::model::assign(inline_js_super_lp_qnu26__, lcm176__,
+            "assigning variable inline_js_super_lp_qnu26__");
           current_statement__ = 110;
           if (stan::math::logical_gte(lcm202__, 1)) {
             current_statement__ = 83;
             stan::math::validate_non_negative_index("qp", "n_occasions",
               lcm203__);
-            Eigen::Matrix<double,-1,1> inline_js_super_lp_qp27__ =
-              Eigen::Matrix<double,-1,1>::Constant(lcm203__,
-                std::numeric_limits<double>::quiet_NaN());
+            Eigen::Matrix<local_scalar_t__,-1,1> inline_js_super_lp_qp27__ =
+              Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm203__,
+                DUMMY_VAR__);
             stan::model::assign(lcm178__,
               stan::math::subtract(1.0,
                 stan::math::transpose(
                   stan::model::rvalue(p, "p", stan::model::index_uni(1)))),
               "assigning variable lcm178__");
+            stan::model::assign(inline_js_super_lp_qp27__, lcm178__,
+              "assigning variable inline_js_super_lp_qp27__");
             lcm199__ = stan::model::rvalue(first, "first",
                          stan::model::index_uni(1));
             if (lcm199__) {
@@ -2650,15 +2664,18 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
               current_statement__ = 83;
               stan::math::validate_non_negative_index("qp", "n_occasions",
                 lcm203__);
-              Eigen::Matrix<double,-1,1> inline_js_super_lp_qp27__ =
-                Eigen::Matrix<double,-1,1>::Constant(lcm203__,
-                  std::numeric_limits<double>::quiet_NaN());
+              Eigen::Matrix<local_scalar_t__,-1,1>
+                inline_js_super_lp_qp27__ =
+                Eigen::Matrix<local_scalar_t__,-1,1>::Constant(lcm203__,
+                  DUMMY_VAR__);
               stan::model::assign(lcm177__,
                 stan::math::subtract(1.0,
                   stan::math::transpose(
                     stan::model::rvalue(p, "p",
                       stan::model::index_uni(inline_js_super_lp_i31__)))),
                 "assigning variable lcm177__");
+              stan::model::assign(inline_js_super_lp_qp27__, lcm177__,
+                "assigning variable inline_js_super_lp_qp27__");
               lcm198__ = first[(inline_js_super_lp_i31__ - 1)];
               if (lcm198__) {
                 current_statement__ = 93;
@@ -3436,6 +3453,8 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
           stan::model::assign(lcm125__,
             stan::model::rvalue(z, "z", stan::model::index_uni(1)),
             "assigning variable lcm125__");
+          stan::model::assign(inline_first_capture_y_i_arg11__, lcm125__,
+            "assigning variable inline_first_capture_y_i_arg11__");
           int inline_first_capture_early_ret_check13__;
           inline_first_capture_early_ret_check13__ = 0;
           for (int inline_first_capture_iterator14__ = 1; inline_first_capture_iterator14__
@@ -3472,6 +3491,8 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
             stan::model::assign(lcm122__,
               stan::model::rvalue(z, "z", stan::model::index_uni(i)),
               "assigning variable lcm122__");
+            stan::model::assign(inline_first_capture_y_i_arg11__, lcm122__,
+              "assigning variable inline_first_capture_y_i_arg11__");
             int inline_first_capture_early_ret_check13__;
             inline_first_capture_early_ret_check13__ = 0;
             for (int inline_first_capture_iterator14__ = 1; inline_first_capture_iterator14__

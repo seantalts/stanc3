@@ -65,21 +65,27 @@ class fuzz_div0_model final : public model_base_crtp<fuzz_div0_model> {
     // suppress unused var warning
     (void) function__;
     try {
-      std::vector<int> T =
-        std::vector<int>(6, std::numeric_limits<int>::min());
-      current_statement__ = 2;
+      std::vector<double> lcm4__;
       {
-        std::stringstream errmsg_stream__;
-        stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
-        throw std::domain_error(errmsg_stream__.str());
-      }
-      std::vector<double> T2 =
-        std::vector<double>(4, std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 2;
-      {
-        std::stringstream errmsg_stream__;
-        stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
-        throw std::domain_error(errmsg_stream__.str());
+        std::vector<int> T =
+          std::vector<int>(6, std::numeric_limits<int>::min());
+        current_statement__ = 2;
+        {
+          std::stringstream errmsg_stream__;
+          stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
+          throw std::domain_error(errmsg_stream__.str());
+        }
+        std::vector<double> T2 =
+          std::vector<double>(4, std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 3;
+        stan::model::assign(T2, std::vector<double>{(0 / 0.), (1 / 0.)},
+          "assigning variable T2");
+        current_statement__ = 2;
+        {
+          std::stringstream errmsg_stream__;
+          stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
+          throw std::domain_error(errmsg_stream__.str());
+        }
       }
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -111,21 +117,27 @@ class fuzz_div0_model final : public model_base_crtp<fuzz_div0_model> {
     // suppress unused var warning
     (void) function__;
     try {
-      std::vector<int> T =
-        std::vector<int>(6, std::numeric_limits<int>::min());
-      current_statement__ = 2;
+      std::vector<double> lcm3__;
       {
-        std::stringstream errmsg_stream__;
-        stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
-        throw std::domain_error(errmsg_stream__.str());
-      }
-      std::vector<double> T2 =
-        std::vector<double>(4, std::numeric_limits<double>::quiet_NaN());
-      current_statement__ = 2;
-      {
-        std::stringstream errmsg_stream__;
-        stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
-        throw std::domain_error(errmsg_stream__.str());
+        std::vector<int> T =
+          std::vector<int>(6, std::numeric_limits<int>::min());
+        current_statement__ = 2;
+        {
+          std::stringstream errmsg_stream__;
+          stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
+          throw std::domain_error(errmsg_stream__.str());
+        }
+        std::vector<double> T2 =
+          std::vector<double>(4, std::numeric_limits<double>::quiet_NaN());
+        current_statement__ = 3;
+        stan::model::assign(T2, std::vector<double>{(0 / 0.), (1 / 0.)},
+          "assigning variable T2");
+        current_statement__ = 2;
+        {
+          std::stringstream errmsg_stream__;
+          stan::math::stan_print(&errmsg_stream__, "Integer division by zero");
+          throw std::domain_error(errmsg_stream__.str());
+        }
       }
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);

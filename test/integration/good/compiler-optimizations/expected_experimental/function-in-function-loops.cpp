@@ -188,6 +188,7 @@ class function_in_function_loops_model final : public model_base_crtp<function_i
             std::numeric_limits<double>::quiet_NaN());
         stan::model::assign(lcm16__, stan::math::rep_vector(0.0, N),
           "assigning variable lcm16__");
+        stan::model::assign(eta, lcm16__, "assigning variable eta");
         double out = std::numeric_limits<double>::quiet_NaN();
         double inline_summer_return10__;
         {
@@ -278,6 +279,7 @@ class function_in_function_loops_model final : public model_base_crtp<function_i
             std::numeric_limits<double>::quiet_NaN());
         stan::model::assign(lcm8__, stan::math::rep_vector(0.0, N),
           "assigning variable lcm8__");
+        stan::model::assign(eta, lcm8__, "assigning variable eta");
         double out = std::numeric_limits<double>::quiet_NaN();
         double inline_summer_return1__;
         {

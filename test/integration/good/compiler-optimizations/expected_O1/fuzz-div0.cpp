@@ -76,6 +76,9 @@ class fuzz_div0_model final : public model_base_crtp<fuzz_div0_model> {
       }
       std::vector<local_scalar_t__> T2 =
         std::vector<local_scalar_t__>(4, DUMMY_VAR__);
+      current_statement__ = 3;
+      stan::model::assign(T2, std::vector<double>{(0 / 0.), (1 / 0.)},
+        "assigning variable T2");
       current_statement__ = 4;
       if (pstream__) {
         stan::math::stan_print(pstream__, T);
@@ -121,6 +124,9 @@ class fuzz_div0_model final : public model_base_crtp<fuzz_div0_model> {
       }
       std::vector<local_scalar_t__> T2 =
         std::vector<local_scalar_t__>(4, DUMMY_VAR__);
+      current_statement__ = 3;
+      stan::model::assign(T2, std::vector<double>{(0 / 0.), (1 / 0.)},
+        "assigning variable T2");
       current_statement__ = 4;
       if (pstream__) {
         stan::math::stan_print(pstream__, T);

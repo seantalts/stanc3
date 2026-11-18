@@ -1854,6 +1854,8 @@ class inlining_fail2_model final : public model_base_crtp<inlining_fail2_model> 
             stan::math::exp(inline_seq_cprob_log_cprob12__),
             "assigning variable inline_seq_cprob_return10__");
         }
+        stan::model::assign(cprob, inline_seq_cprob_return10__,
+          "assigning variable cprob");
         current_statement__ = 55;
         stan::math::validate_non_negative_index("recruit", "M", M);
         current_statement__ = 56;

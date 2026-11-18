@@ -12,10 +12,10 @@ static constexpr std::array<const char*, 11> locations_array__ =
   " (in '../inliner-same-names.stan', line 5, column 4 to column 30)",
   " (in '../inliner-same-names.stan', line 7, column 11 to column 13)",
   " (in '../inliner-same-names.stan', line 7, column 4 to column 22)",
+  " (in '../inliner-same-names.stan', line 9, column 4 to column 15)",
   " (in '../inliner-same-names.stan', line 13, column 2 to column 8)",
   " (in '../inliner-same-names.stan', line 16, column 9 to column 10)",
   " (in '../inliner-same-names.stan', line 17, column 9 to column 10)",
-  " (in '../inliner-same-names.stan', line 9, column 4 to column 15)",
   " (in '../inliner-same-names.stan', line 2, column 24 to line 10, column 3)"};
 template <typename T0__,
           stan::require_all_t<stan::is_col_vector<T0__>,
@@ -49,7 +49,7 @@ foo(const T0__& oR_arg__, std::ostream* pstream__) {
       Eigen::Matrix<local_scalar_t__,-1,1> R;
       current_statement__ = 5;
       stan::model::assign(R, oR, "assigning variable R");
-      current_statement__ = 9;
+      current_statement__ = 6;
       return oR;
     }
   } catch (const std::exception& e) {
@@ -79,15 +79,15 @@ class inliner_same_names_model final : public model_base_crtp<inliner_same_names
     // suppress unused var warning
     (void) DUMMY_VAR__;
     try {
-      current_statement__ = 6;
+      current_statement__ = 7;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 6;
-      stan::io::read_from_context(N, context__, "N");
       current_statement__ = 7;
-      stan::math::validate_non_negative_index("R", "N", N);
+      stan::io::read_from_context(N, context__, "N");
       current_statement__ = 8;
+      stan::math::validate_non_negative_index("R", "N", N);
+      current_statement__ = 9;
       stan::math::validate_non_negative_index("out", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -138,9 +138,13 @@ class inliner_same_names_model final : public model_base_crtp<inliner_same_names
         lcm6__ = stan::math::num_elements(R);
         current_statement__ = 4;
         stan::math::validate_non_negative_index("R", "ot", lcm6__);
-        Eigen::Matrix<double,-1,1> inline_foo_R11__ =
-          Eigen::Matrix<double,-1,1>::Constant(stan::math::num_elements(R),
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<double,-1,1> inline_foo_R11__;
+        current_statement__ = 5;
+        stan::model::assign(inline_foo_R11__, R,
+          "assigning variable inline_foo_R11__");
+        current_statement__ = 6;
+        stan::model::assign(inline_foo_return9__, R,
+          "assigning variable inline_foo_return9__");
       }
       stan::model::assign(out, R, "assigning variable out");
     } catch (const std::exception& e) {
@@ -186,9 +190,13 @@ class inliner_same_names_model final : public model_base_crtp<inliner_same_names
         lcm5__ = stan::math::num_elements(R);
         current_statement__ = 4;
         stan::math::validate_non_negative_index("R", "ot", lcm5__);
-        Eigen::Matrix<double,-1,1> inline_foo_R7__ =
-          Eigen::Matrix<double,-1,1>::Constant(stan::math::num_elements(R),
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<double,-1,1> inline_foo_R7__;
+        current_statement__ = 5;
+        stan::model::assign(inline_foo_R7__, R,
+          "assigning variable inline_foo_R7__");
+        current_statement__ = 6;
+        stan::model::assign(inline_foo_return5__, R,
+          "assigning variable inline_foo_return5__");
       }
       stan::model::assign(out, R, "assigning variable out");
     } catch (const std::exception& e) {
@@ -252,9 +260,13 @@ class inliner_same_names_model final : public model_base_crtp<inliner_same_names
         lcm2__ = stan::math::num_elements(R);
         current_statement__ = 4;
         stan::math::validate_non_negative_index("R", "ot", lcm2__);
-        Eigen::Matrix<double,-1,1> inline_foo_R3__ =
-          Eigen::Matrix<double,-1,1>::Constant(stan::math::num_elements(R),
-            std::numeric_limits<double>::quiet_NaN());
+        Eigen::Matrix<double,-1,1> inline_foo_R3__;
+        current_statement__ = 5;
+        stan::model::assign(inline_foo_R3__, R,
+          "assigning variable inline_foo_R3__");
+        current_statement__ = 6;
+        stan::model::assign(inline_foo_return1__, R,
+          "assigning variable inline_foo_return1__");
       }
       stan::model::assign(out, R, "assigning variable out");
       if (emit_transformed_parameters__) {
