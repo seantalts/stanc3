@@ -205,9 +205,6 @@ let%expect_test "inline functions" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -233,35 +230,33 @@ let%expect_test "inline functions 2" =
   Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
   [%expect
     {|
-      functions {
-        void f() {
-          {
+    functions {
+      void f() {
+        {
 
-          }
-        }
-        void g() {
-          {
-            f();
-          }
         }
       }
-
-
-
-
-
-      generate_quantities {
-        if(emit_transformed_parameters__) ; else {
-
-        }
-        if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
-        if(!(emit_generated_quantities__)) return;
+      void g() {
         {
-          {
-
-          }
+          f();
         }
-      } |}]
+      }
+    }
+
+
+
+
+
+    generate_quantities {
+      if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(!(emit_generated_quantities__)) return;
+      {
+        {
+
+        }
+      }
+    }
+    |}]
 
 let%expect_test "list collapsing" =
   let mir =
@@ -423,13 +418,6 @@ let%expect_test "list collapsing" =
      (generate_quantities
       (((pattern
          (IfElse
-          ((pattern (Var emit_transformed_parameters__))
-           (meta ((type_ UInt) (loc <opaque>) (adlevel DataOnly))))
-          ((pattern Skip) (meta <opaque>))
-          (((pattern (Block ())) (meta <opaque>)))))
-        (meta <opaque>))
-       ((pattern
-         (IfElse
           ((pattern
             (FunApp (Operator PNot)
              (((pattern
@@ -495,9 +483,6 @@ let%expect_test "recursive functions" =
         data int inline_fib_early_ret_check2__;
         inline_fib_early_ret_check2__ = 0;
         for(inline_fib_iterator3__ in 1:1) {
-          if((5 == 0)) ; else {
-
-          }
           if((5 == 0) || (5 == 1)) {
             inline_fib_early_ret_check2__ = 1;
             inline_fib_return1__ = 5;
@@ -513,9 +498,6 @@ let%expect_test "recursive functions" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -537,26 +519,24 @@ let%expect_test "do not try to inline extern functions" =
   Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
   [%expect
     {|
-            functions {
-              extern int fib(int n);
-            }
+    functions {
+      extern int fib(int n);
+    }
 
 
 
-            log_prob {
-              {
-                FnReject__(fib(5));
-              }
-            }
+    log_prob {
+      {
+        FnReject__(fib(5));
+      }
+    }
 
 
-            generate_quantities {
-              if(emit_transformed_parameters__) ; else {
-
-              }
-              if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
-              if(!(emit_generated_quantities__)) return;
-            } |}]
+    generate_quantities {
+      if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(!(emit_generated_quantities__)) return;
+    }
+    |}]
 
 let%expect_test "inline function in for loop" =
   let mir =
@@ -624,9 +604,6 @@ let%expect_test "inline function in for loop" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -710,9 +687,6 @@ let%expect_test "inline function in for loop 2" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -777,9 +751,6 @@ let%expect_test "inline function in while loop" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -838,9 +809,6 @@ let%expect_test "inline function in if then else" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -922,9 +890,6 @@ let%expect_test "inline function in ternary if " =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -988,9 +953,6 @@ let%expect_test "inline function multiple returns " =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -1054,9 +1016,6 @@ let%expect_test "inline function return inside while" =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -1112,9 +1071,6 @@ let%expect_test "inline function indices " =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -1171,9 +1127,6 @@ let%expect_test "inline function and " =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -1229,9 +1182,6 @@ let%expect_test "inline function or " =
 
 
     generate_quantities {
-      if(emit_transformed_parameters__) ; else {
-
-      }
       if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
       if(!(emit_generated_quantities__)) return;
     }
@@ -3988,21 +3938,11 @@ let%expect_test "inlined calls with data actuals return data" =
       {
         real inline_pick_wide11__;
         inline_pick_wide11__ = s;
-        if((tau > 0)) {
-
-        } else {
-
-        }
         inline_pick_return10__ = ((tau > 0) ? tau : promote(1.0, real, var));
       }
       {
         data real inline_pick_wide8__;
         inline_pick_wide8__ = s;
-        if((s > 0)) {
-
-        } else {
-
-        }
         inline_pick_return7__ = ((s > 0) ? s : promote(1.0, real, data));
       }
       target += normal_lupdf(tau, inline_pick_return7__, inline_pick_return10__);
@@ -4103,9 +4043,11 @@ let%expect_test "inlined arguments are evaluated where the call is" =
         inline_f_return1__ = (inline_f_x_arg4__ + inline_f_x_arg4__);
       }
       target += inline_f_return1__;
+      data int inline_condition_value9__;
       real inline_f_x_arg7__;
       real inline_f_return6__;
-      if((n > 0)) {
+      inline_condition_value9__ = (n > 0);
+      if(inline_condition_value9__) {
         inline_f_x_arg7__ = (v[n] * y);
         {
           inline_f_return6__ = (inline_f_x_arg7__ + inline_f_x_arg7__);
@@ -4113,20 +4055,21 @@ let%expect_test "inlined arguments are evaluated where the call is" =
       } else {
 
       }
-      target += ((n > 0) ? inline_f_return6__ : promote(0, real, var));
-      real inline_f_x_arg10__;
-      real inline_f_return9__;
-      inline_f_x_arg10__ = (x * y);
+      target += (inline_condition_value9__ ? inline_f_return6__ :
+                 promote(0, real, var));
+      real inline_f_x_arg11__;
+      real inline_f_return10__;
+      inline_f_x_arg11__ = (x * y);
       {
-        inline_f_return9__ = (inline_f_x_arg10__ + inline_f_x_arg10__);
+        inline_f_return10__ = (inline_f_x_arg11__ + inline_f_x_arg11__);
       }
-      while((inline_f_return9__ < 10)) {
+      while((inline_f_return10__ < 10)) {
         {
           x = (x + promote(1, real, data));
         }
-        inline_f_x_arg10__ = (x * y);
+        inline_f_x_arg11__ = (x * y);
         {
-          inline_f_return9__ = (inline_f_x_arg10__ + inline_f_x_arg10__);
+          inline_f_return10__ = (inline_f_x_arg11__ + inline_f_x_arg11__);
         }
       }
     }
@@ -4240,10 +4183,7 @@ let%expect_test "inlined operators on data actuals are data" =
   |> List.rev
   |> List.iter ~f:(fun ad ->
       print_endline (if UnsizedType.has_autodiff ad then "autodiff" else "data"));
-  [%expect {|
-    data
-    data
-    |}]
+  [%expect {| data |}]
 
 let%expect_test "inlined calls with only data actuals are data" =
   reset_and_mir_with_passes ["inlining"]
@@ -4428,4 +4368,65 @@ let%expect_test "dead code elimination keeps calls that can throw" =
       real c;
       target += normal_lupdf(x, promote(0, real, data), promote(5, real, data));
     }
+    |}]
+
+let%expect_test "inlining evaluates a condition with a draw once" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real f_rng() {
+          return normal_rng(0, 1);
+        }
+        void g(real x) {
+        }
+      }
+      generated quantities {
+        if (0.5 > normal_rng(0, 1) || 1) {
+          print("a");
+        }
+        real b = 0.5 > normal_rng(0, 1) && f_rng() > 0;
+        g(normal_rng(0, 1) > 1 ? 1.0 : 2.0);
+        real c = normal_rng(0, 1) > 1 ? f_rng() : 2.0;
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.generate_quantities
+  |> print_endline;
+  [%expect
+    {|
+    if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+    if(!(emit_generated_quantities__)) return;
+    if((0.5 > normal_rng(0, 1)) || 1) {
+      FnPrint__("a");
+    }
+    data real b;
+    data int inline_condition_value3__;
+    data real inline_f_rng_return1__;
+    inline_condition_value3__ = (0.5 > normal_rng(0, 1));
+    if(inline_condition_value3__) {
+      {
+        inline_f_rng_return1__ = promote(normal_rng(0, 1), real, var);
+      }
+    }
+    b = promote(inline_condition_value3__ && (inline_f_rng_return1__ > 0), real,
+                data);
+    data real inline_g_x_arg4__;
+    inline_g_x_arg4__ = ((normal_rng(0, 1) > 1) ? 1.0 : 2.0);
+    {
+
+    }
+    data real c;
+    data int inline_condition_value8__;
+    data real inline_f_rng_return6__;
+    inline_condition_value8__ = (normal_rng(0, 1) > 1);
+    if(inline_condition_value8__) {
+      {
+        inline_f_rng_return6__ = promote(normal_rng(0, 1), real, var);
+      }
+    } else {
+
+    }
+    c = (inline_condition_value8__ ? inline_f_rng_return6__ : 2.0);
     |}]

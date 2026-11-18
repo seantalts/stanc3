@@ -414,15 +414,18 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
       let dl1, sl1, e1 = inline_expr e1 in
       let dl2, sl2, e2 = inline_expr e2 in
       let dl3, sl3, e3 = inline_expr e3 in
-      ( dl1 @ dl2 @ dl3
-      , sl1
-        @ [ Stmt.(
+      let dl1, sl1, e1 =
+        bind_condition (dl1, sl1, e1) ~needed:(sl2 @ sl3 <> []) in
+      let guard =
+        if sl2 @ sl3 = [] then []
+        else
+          [ Stmt.(
               Pattern.IfElse
                 ( e1
                 , {pattern= block_no_loc sl2; meta= Location_span.empty}
                 , Some {pattern= block_no_loc sl3; meta= Location_span.empty} ))
-          ]
-      , {e with pattern= TernaryIf (e1, e2, e3)} )
+          ] in
+      (dl1 @ dl2 @ dl3, sl1 @ guard, {e with pattern= TernaryIf (e1, e2, e3)})
   | Indexed (e', i_list) ->
       let dl, sl, e' = inline_expr e' in
       let d_list, s_list, i_list =
@@ -434,24 +437,54 @@ let rec inline_function_expression propto adt fim (Expr.{pattern; _} as e) =
   | EAnd (e1, e2) ->
       let dl1, sl1, e1 = inline_expr e1 in
       let dl2, sl2, e2 = inline_expr e2 in
+      let dl1, sl1, e1 = bind_condition (dl1, sl1, e1) ~needed:(sl2 <> []) in
       let sl2 =
-        [ Stmt.(
-            Pattern.IfElse
-              ( e1
-              , {pattern= Block (map_no_loc sl2); meta= Location_span.empty}
-              , None )) ] in
+        if sl2 = [] then []
+        else
+          [ Stmt.(
+              Pattern.IfElse
+                ( e1
+                , {pattern= Block (map_no_loc sl2); meta= Location_span.empty}
+                , None )) ] in
       (dl1 @ dl2, sl1 @ sl2, {e with pattern= EAnd (e1, e2)})
   | EOr (e1, e2) ->
       let dl1, sl1, e1 = inline_expr e1 in
       let dl2, sl2, e2 = inline_expr e2 in
+      let dl1, sl1, e1 = bind_condition (dl1, sl1, e1) ~needed:(sl2 <> []) in
       let sl2 =
-        [ Stmt.(
-            Pattern.IfElse
-              ( e1
-              , {pattern= Skip; meta= Location_span.empty}
-              , Some {pattern= Block (map_no_loc sl2); meta= Location_span.empty}
-              )) ] in
+        if sl2 = [] then []
+        else
+          [ Stmt.(
+              Pattern.IfElse
+                ( e1
+                , {pattern= Skip; meta= Location_span.empty}
+                , Some
+                    {pattern= Block (map_no_loc sl2); meta= Location_span.empty}
+                )) ] in
       (dl1 @ dl2, sl1 @ sl2, {e with pattern= EOr (e1, e2)})
+
+(* The condition of a ternary or the left operand of && or ||. When the inlined
+   statements of the other operands need a guard, the guard and the expression
+   both test it, so a condition that is not a variable or literal is bound to a
+   temporary and evaluated once. *)
+and bind_condition (decls, stmts, e1) ~needed =
+  match e1.Expr.pattern with
+  | Var _ | Lit _ -> (decls, stmts, e1)
+  | _ when not needed -> (decls, stmts, e1)
+  | _ ->
+      let temp = gen_inline_var "condition" "value" in
+      ( decls
+        @ [ Stmt.Pattern.Decl
+              { decl_adtype= e1.meta.adlevel
+              ; decl_type=
+                  Sized (unsafe_unsized_to_sized_type (Unsized e1.meta.type_))
+              ; decl_id= temp
+              ; initialize= Uninit
+              ; decl_annotations= [] } ]
+      , stmts
+        @ [ Stmt.Pattern.Assignment
+              (Stmt.Helpers.lvariable temp, e1.meta.type_, e1) ]
+      , {e1 with pattern= Var temp} )
 
 and inline_function_arguments fname propto adt fim args es =
   let inline_function_argument (name, e) =
