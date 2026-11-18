@@ -77,6 +77,13 @@ let block_no_loc l = Stmt.Pattern.Block (map_no_loc l)
 let slist_concat_no_loc l stmt =
   match l with [] -> stmt | l -> slist_no_loc (l @ [stmt])
 
+let int_expr pattern =
+  Expr.
+    { pattern
+    ; meta=
+        Expr.Typed.Meta.
+          {type_= UInt; adlevel= DataOnly; loc= Location_span.empty} }
+
 let gen_inline_var (name : string) (id_var : string) =
   Gensym.next ~prefix:"inline" ~extra:("_" ^ name ^ "_" ^ id_var) ()
 
@@ -609,37 +616,68 @@ and inline_function_statement propto adt fim Stmt.{pattern; meta} =
                  , inline_function_statement propto adt fim s1
                  , Option.map ~f:(inline_function_statement propto adt fim) s2
                  ))
-        | While (expr, stmt) ->
+        | While (expr, stmt) -> (
             let d', s', e = inline_expr expr in
-            slist_concat_no_loc (d' @ s')
-              (While
-                 ( e
-                 , if List.is_empty s' then
-                     inline_function_statement propto adt fim stmt
-                   else
-                     { pattern=
-                         Block
-                           ([inline_function_statement propto adt fim stmt]
-                           @ map_no_loc s')
-                     ; meta= Location_span.empty } ))
+            let body = inline_function_statement propto adt fim stmt in
+            match s' with
+            | [] -> slist_concat_no_loc d' (While (e, body))
+            | _ ->
+                (* The condition's statements run once, at the top of each
+                   iteration, so a continue in the body also reaches them. *)
+                let stop =
+                  Stmt.Pattern.IfElse
+                    ( e
+                    , {pattern= Skip; meta= Location_span.empty}
+                    , Some {pattern= Break; meta= Location_span.empty} ) in
+                slist_concat_no_loc d'
+                  (While
+                     ( int_expr (Lit (Int, "1"))
+                     , { pattern= Block (map_no_loc (s' @ [stop]) @ [body])
+                       ; meta= Location_span.empty } )))
         | For {loopvar; lower; upper; body} ->
             let d_lower, s_lower, lower = inline_expr lower in
             let d_upper, s_upper, upper = inline_expr upper in
-            slist_concat_no_loc
-              (d_lower @ d_upper @ s_lower @ s_upper)
-              (For
-                 { loopvar
-                 ; lower
-                 ; upper
-                 ; body=
-                     (if List.is_empty s_upper then
-                        inline_function_statement propto adt fim body
-                      else
-                        { pattern=
-                            Block
-                              ([inline_function_statement propto adt fim body]
-                              @ map_no_loc s_upper)
-                        ; meta= Location_span.empty }) })
+            let body = inline_function_statement propto adt fim body in
+            if List.is_empty s_upper then
+              slist_concat_no_loc
+                (d_lower @ d_upper @ s_lower)
+                (For {loopvar; lower; upper; body})
+            else
+              (* C++ tests the upper bound before every iteration. Counting at
+                 the top of a while loop lets a continue in the body reach the
+                 bound's statements too. *)
+              let one = int_expr (Lit (Int, "1")) in
+              let var = int_expr (Var loopvar) in
+              let count =
+                Stmt.Pattern.Assignment
+                  ( Stmt.Helpers.lvariable loopvar
+                  , UInt
+                  , int_expr (FunApp (Operator Plus, [var; one])) ) in
+              let stop =
+                Stmt.Pattern.IfElse
+                  ( int_expr (FunApp (Operator Leq, [var; upper]))
+                  , {pattern= Skip; meta= Location_span.empty}
+                  , Some {pattern= Break; meta= Location_span.empty} ) in
+              slist_concat_no_loc
+                (d_lower @ d_upper @ s_lower)
+                (Block
+                   (map_no_loc
+                      [ Decl
+                          { decl_adtype= DataOnly
+                          ; decl_id= loopvar
+                          ; decl_type= Sized SInt
+                          ; initialize=
+                              Assign
+                                (int_expr
+                                   (FunApp (Operator Minus, [lower; one])))
+                          ; decl_annotations= [] }
+                      ; While
+                          ( one
+                          , { pattern=
+                                Block
+                                  (map_no_loc ((count :: s_upper) @ [stop])
+                                  @ [body])
+                            ; meta= Location_span.empty } ) ]))
         | Profile (name, l) ->
             Profile
               (name, List.map l ~f:(inline_function_statement propto adt fim))

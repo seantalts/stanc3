@@ -587,16 +587,17 @@ let%expect_test "inline function in for loop" =
           inline_f_return1__ = 42;
         }
         {
-          FnPrint__("g");
-          inline_g_return3__ = (3 + 24);
-        }
-        for(i in inline_f_return1__:inline_g_return3__) {
-          {
-            FnPrint__("body");
-          }
-          {
-            FnPrint__("g");
-            inline_g_return3__ = (3 + 24);
+          data int i = (inline_f_return1__ - 1);
+          while(1) {
+            i = (i + 1);
+            {
+              FnPrint__("g");
+              inline_g_return3__ = (3 + 24);
+            }
+            if((i <= inline_g_return3__)) ; else break;
+            {
+              FnPrint__("body");
+            }
           }
         }
       }
@@ -660,26 +661,22 @@ let%expect_test "inline function in for loop 2" =
           inline_f_return1__ = 42;
         }
         {
-          FnPrint__("g");
-          int inline_f_return4__;
-          {
-            FnPrint__("f");
-            inline_f_return4__ = 42;
-          }
-          inline_g_return3__ = (inline_f_return4__ + 24);
-        }
-        for(i in inline_f_return1__:inline_g_return3__) {
-          {
-            FnPrint__("body");
-          }
-          {
-            FnPrint__("g");
-            int inline_f_return4__;
+          data int i = (inline_f_return1__ - 1);
+          while(1) {
+            i = (i + 1);
             {
-              FnPrint__("f");
-              inline_f_return4__ = 42;
+              FnPrint__("g");
+              int inline_f_return4__;
+              {
+                FnPrint__("f");
+                inline_f_return4__ = 42;
+              }
+              inline_g_return3__ = (inline_f_return4__ + 24);
             }
-            inline_g_return3__ = (inline_f_return4__ + 24);
+            if((i <= inline_g_return3__)) ; else break;
+            {
+              FnPrint__("body");
+            }
           }
         }
       }
@@ -735,17 +732,141 @@ let%expect_test "inline function in while loop" =
     log_prob {
       {
         int inline_g_return1__;
-        {
-          FnPrint__("g");
-          inline_g_return1__ = (3 + 24);
-        }
-        while(inline_g_return1__) {
-          FnPrint__("body");
+        while(1) {
           {
             FnPrint__("g");
             inline_g_return1__ = (3 + 24);
           }
+          if(inline_g_return1__) ; else break;
+          FnPrint__("body");
         }
+      }
+    }
+
+
+    generate_quantities {
+      if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(!(emit_generated_quantities__)) return;
+    }
+    |}]
+
+let%expect_test "inline function in while condition, body continues" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        int g(int z) {
+          return z * 1;
+        }
+      }
+      model {
+        int i = 0;
+        while (g(i) < 3) {
+          i += 1;
+          if (i < 10) continue;
+        }
+        print(i);
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
+  [%expect
+    {|
+    functions {
+      int g(int z) {
+        {
+          return (z * 1);
+        }
+      }
+    }
+
+
+
+    log_prob {
+      {
+        int i;
+        i = 0;
+        int inline_g_return1__;
+        while(1) {
+          {
+            inline_g_return1__ = (i * 1);
+          }
+          if((inline_g_return1__ < 3)) ; else break;
+          {
+            i = (i + 1);
+            if((i < 10)) continue;
+          }
+        }
+        FnPrint__(i);
+      }
+    }
+
+
+    generate_quantities {
+      if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(!(emit_generated_quantities__)) return;
+    }
+    |}]
+
+let%expect_test "inline function in for loop bound, body continues" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        int g(int z) {
+          return z * 1;
+        }
+      }
+      model {
+        int n = 5;
+        int c = 0;
+        for (i in 1:g(n)) {
+          n -= 1;
+          c += 1;
+          if (c > 0) continue;
+        }
+        print(c);
+      }
+      |}
+  in
+  let mir = function_inlining mir in
+  Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
+  [%expect
+    {|
+    functions {
+      int g(int z) {
+        {
+          return (z * 1);
+        }
+      }
+    }
+
+
+
+    log_prob {
+      {
+        int n;
+        n = 5;
+        int c;
+        c = 0;
+        int inline_g_return1__;
+        {
+          data int i = (1 - 1);
+          while(1) {
+            i = (i + 1);
+            {
+              inline_g_return1__ = (n * 1);
+            }
+            if((i <= inline_g_return1__)) ; else break;
+            {
+              n = (n - 1);
+              c = (c + 1);
+              if((c > 0)) continue;
+            }
+          }
+        }
+        FnPrint__(c);
       }
     }
 
@@ -4059,17 +4180,14 @@ let%expect_test "inlined arguments are evaluated where the call is" =
                  promote(0, real, var));
       real inline_f_x_arg11__;
       real inline_f_return10__;
-      inline_f_x_arg11__ = (x * y);
-      {
-        inline_f_return10__ = (inline_f_x_arg11__ + inline_f_x_arg11__);
-      }
-      while((inline_f_return10__ < 10)) {
-        {
-          x = (x + promote(1, real, data));
-        }
+      while(1) {
         inline_f_x_arg11__ = (x * y);
         {
           inline_f_return10__ = (inline_f_x_arg11__ + inline_f_x_arg11__);
+        }
+        if((inline_f_return10__ < 10)) ; else break;
+        {
+          x = (x + promote(1, real, data));
         }
       }
     }
@@ -4101,7 +4219,8 @@ let%expect_test "an inlined tuple argument is evaluated once" =
   in
   let mir = function_inlining mir in
   Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
-  [%expect {|
+  [%expect
+    {|
     real y;
     {
       tuple_ad(var, var)tuple(real, real) inline_first_t_arg2__;
@@ -4270,7 +4389,8 @@ let%expect_test "dead code elimination keeps an unused draw" =
   let mir = dead_code_elimination mir in
   Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.generate_quantities
   |> print_endline;
-  [%expect {|
+  [%expect
+    {|
     if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
     if(!(emit_generated_quantities__)) return;
     data real b;
@@ -4302,7 +4422,8 @@ let%expect_test "dead code elimination keeps size and index checks" =
   in
   let mir = dead_code_elimination mir in
   Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
-  [%expect {|
+  [%expect
+    {|
     real x;
     {
       matrix[2, 3] z;
@@ -4355,7 +4476,8 @@ let%expect_test "dead code elimination keeps calls that can throw" =
   in
   let mir = dead_code_elimination mir in
   Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
-  [%expect {|
+  [%expect
+    {|
     real x;
     {
       real a;
