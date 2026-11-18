@@ -37,16 +37,27 @@ let cannot_duplicate_expr ?(preserve_stability = false) (e : Expr.Typed.t) =
     || (preserve_stability && UnsizedType.is_autodiffable e.meta.type_) in
   expr_any pred e
 
-(* A draw advances the RNG stream, so removing an unused one changes every
-   later draw. *)
+(* Library and user functions can throw. Operators throw only on integer
+   division by zero or on containers whose sizes differ. *)
+let can_throw_top_expr (e : Expr.Typed.t) =
+  match e.pattern with
+  | FunApp ((StanLib _ | UserDefined _), _) -> true
+  | FunApp (Operator (IntDivide | Modulo), _) -> true
+  | FunApp (Operator Divide, args)
+    when List.for_all
+           ~f:(fun (a : Expr.Typed.t) -> UnsizedType.is_int_type a.meta.type_)
+           args ->
+      true
+  | FunApp (Operator _, args) ->
+      List.exists
+        ~f:(fun (a : Expr.Typed.t) -> UnsizedType.is_container a.meta.type_)
+        args
+  | _ -> false
+
+(* Removing an expression must not remove an effect or an error. A draw counts
+   as a call, so removing an unused one cannot change later draws. *)
 let cannot_remove_expr (e : Expr.Typed.t) =
-  let pred e =
-    can_side_effect_top_expr e
-    ||
-    match e.pattern with
-    | FunApp ((UserDefined (_, FnRng) | StanLib (_, FnRng)), _) -> true
-    | _ -> false in
-  expr_any pred e
+  expr_any (fun e -> can_side_effect_top_expr e || can_throw_top_expr e) e
 
 let rec fold_expr ~take_expr ~(init : 'c) (expr : Expr.Typed.t) : 'c =
   Expr.Pattern.fold

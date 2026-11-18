@@ -3347,6 +3347,7 @@ let%expect_test
         int y;
         real theta;
         if((100000 >= 1)) {
+          lcm4__ = inv_logit(x);
           lcm3__ = bernoulli_logit_lpmf(y, x);
           lcm5__ = (1 + 1);
           target += lcm3__;
@@ -4379,6 +4380,52 @@ let%expect_test "dead code elimination keeps size and index checks" =
       v = rep_vector(promote(1, real, data), 3);
       v = rep_vector(promote(1, real, data), 4);
       real b;
+      target += normal_lupdf(x, promote(0, real, data), promote(5, real, data));
+    }
+    |}]
+
+let%expect_test "dead code elimination keeps calls that can throw" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        real f(real y) {
+          reject("f rejects");
+          return y;
+        }
+        real g(real x, real xc, array[] real theta, array[] real x_r,
+               array[] int x_i) {
+          return x ^ 2;
+        }
+      }
+      data {
+        int n;
+      }
+      parameters {
+        real x;
+      }
+      model {
+        real a = integrate_1d(g, 0.2, x, {x}, {1.0}, {1}, 0.01);
+        real b = f(x);
+        int i = n %/% 0;
+        real c = x * 2 + 1;
+        x ~ normal(0, 5);
+      }
+      |}
+  in
+  let mir = dead_code_elimination mir in
+  Fmt.str "@[<v>%a@]" (Fmt.list Stmt.Located.pp) mir.log_prob |> print_endline;
+  [%expect {|
+    real x;
+    {
+      real a;
+      a = integrate_1d(g, 0.2, x, FnMakeArray__(x), FnMakeArray__(1.0),
+                       FnMakeArray__(1), 0.01);
+      real b;
+      b = f(x);
+      int i;
+      i = (n %/% 0);
+      real c;
       target += normal_lupdf(x, promote(0, real, data), promote(5, real, data));
     }
     |}]
