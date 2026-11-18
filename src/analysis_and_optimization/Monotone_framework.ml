@@ -549,7 +549,9 @@ let live_variables_transfer (never_kill : string Set.Poly.t)
          |Profile _ | Block _ | SList _
          |Assignment (_, _, _) ->
             Set.Poly.empty in
-      transfer_gen_kill p gen (Set.Poly.diff kill never_kill)
+      transfer_gen_kill p
+        (Set.Poly.diff gen never_kill)
+        (Set.Poly.diff kill never_kill)
   end : TRANSFER_FUNCTION
     with type labels = int
      and type properties = string Set.Poly.t)
@@ -1015,7 +1017,8 @@ let globals (prog : Program.Typed.t) =
     ; Set.Poly.singleton "target" ]
 
 (** Monotone framework instance for live_variables analysis. Expects reverse
-    flowgraph. *)
+    flowgraph. The globals of [prog] are always live, so the results leave them
+    out to keep the sets small. *)
 let live_variables_mfp (prog : Program.Typed.t)
     (module Rev_Flowgraph : Monotone_framework_sigs.FLOWGRAPH
       with type labels = int)
@@ -1025,9 +1028,7 @@ let live_variables_mfp (prog : Program.Typed.t)
     (module struct
       type vals = string
 
-      (* NOTE: global generated quantities, (transformed) parameters and target
-         are always observable so should be live. *)
-      let initial = never_kill
+      let initial = Set.Poly.empty
     end : INITIALTYPE
       with type vals = string) in
   let (module Lattice) = powerset_lattice variables in

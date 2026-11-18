@@ -1125,6 +1125,9 @@ let dead_code_elimination (mir : Program.Typed.t) =
      this shouldn't be the case for the purposes of reaching definitions,
      constant propagation, expressions analyses. But I do think that's the right
      way to go about live variables. *)
+  (* Global generated quantities, (transformed) parameters and target are always
+     observable, so they are always live. *)
+  let globals = Monotone_framework.globals mir in
   let transform s =
     let rev_flowgraph, flowgraph_to_mir =
       Monotone_framework.inverse_flowgraph_of_stmt s in
@@ -1138,10 +1141,12 @@ let dead_code_elimination (mir : Program.Typed.t) =
          flowgraph *)
       let live_variables_s =
         (LabelMap.find i live_variables).Monotone_framework_sigs.entry in
+      let is_live x =
+        Set.Poly.mem x live_variables_s || Set.Poly.mem x globals in
       match stmt with
       | Stmt.Pattern.Assignment (lhs, _, rhs) ->
           if
-            Set.Poly.mem (Stmt.Helpers.lhs_variable lhs) live_variables_s
+            is_live (Stmt.Helpers.lhs_variable lhs)
             || cannot_remove_expr rhs
             || List.exists
                  ~f:(idx_any cannot_remove_expr)
@@ -1153,8 +1158,7 @@ let dead_code_elimination (mir : Program.Typed.t) =
             due to side effects. *)
       (* TODO: maybe we should revisit that. *)
       | Decl ({decl_id; initialize= Assign e; _} as decl) ->
-          if Set.Poly.mem decl_id live_variables_s || cannot_remove_expr e then
-            stmt
+          if is_live decl_id || cannot_remove_expr e then stmt
           else Decl {decl with initialize= Uninit}
       | Decl _ | TargetPE _ | JacobianPE _
        |NRFunApp (_, _)
