@@ -265,3 +265,108 @@ let%expect_test "read data - tuple" =
           (meta <opaque>)))))
       (meta <opaque>)))
     |}]
+
+(* Each call in the statements that a truncation adds, with the type and adlevel
+   that the MIR gives it. *)
+let print_truncation_calls model =
+  let rec expr (e : Expr.Typed.t) =
+    match e.pattern with
+    | FunApp (kind, args) ->
+        let adlevel =
+          match e.meta.adlevel with
+          | DataOnly -> "data"
+          | AutoDiffable -> "autodiff"
+          | TupleAD _ -> "tuple" in
+        Fmt.pr "%a: %a %s@."
+          (Fun_kind.pp (fun ppf _ -> Fmt.string ppf "_"))
+          kind UnsizedType.pp e.meta.type_ adlevel;
+        Stdlib.List.iter expr args
+    | _ -> Expr.Pattern.fold (fun () e -> expr e) () e.pattern
+  and stmt (s : Stmt.Located.t) =
+    Stmt.Pattern.fold (fun () e -> expr e) (fun () s -> stmt s) () s.pattern
+  in
+  let mir = Test_utils.mir_of_string model in
+  Stdlib.List.iter stmt mir.log_prob
+
+let%expect_test "truncation term types with int bounds" =
+  print_truncation_calls
+    {|
+      functions {
+        real foo_lpdf(real y, real mu) { return -(y - mu)^2; }
+        real foo_lcdf(real y, real mu) { return -1.7; }
+        real foo_lccdf(real y, real mu) { return -0.02; }
+      }
+      data {
+        int k;
+      }
+      parameters {
+        real<lower=1, upper=5> y;
+        vector<lower=1, upper=5>[2] z;
+        real mu;
+      }
+      model {
+        k ~ poisson(exp(mu)) T[1, 8];
+        y ~ foo(mu) T[1, ];
+        y ~ foo(mu) T[, 5];
+        y ~ foo(mu) T[1, 5];
+        y ~ normal(mu, 1) T[1, 5];
+        z ~ normal(mu, 1) T[1, 5];
+      }
+    |};
+  [%expect
+    {|
+    poisson_lupmf: real autodiff
+    exp: real autodiff
+    <: int data
+    FnNegInf__: real data
+    >: int data
+    FnNegInf__: real data
+    -: real autodiff
+    log_diff_exp: real autodiff
+    poisson_lcdf: real autodiff
+    exp: real autodiff
+    poisson_lcdf: real autodiff
+    -: int data
+    exp: real autodiff
+    foo_lupdf: real autodiff
+    <: int autodiff
+    FnNegInf__: real data
+    -: real autodiff
+    foo_lccdf: real autodiff
+    foo_lupdf: real autodiff
+    >: int autodiff
+    FnNegInf__: real data
+    -: real autodiff
+    foo_lcdf: real autodiff
+    foo_lupdf: real autodiff
+    <: int autodiff
+    FnNegInf__: real data
+    >: int autodiff
+    FnNegInf__: real data
+    -: real autodiff
+    log_diff_exp: real autodiff
+    foo_lcdf: real autodiff
+    foo_lcdf: real autodiff
+    normal_lupdf: real autodiff
+    <: int autodiff
+    FnNegInf__: real data
+    >: int autodiff
+    FnNegInf__: real data
+    -: real autodiff
+    log_diff_exp: real autodiff
+    normal_lcdf: real autodiff
+    normal_lcdf: real autodiff
+    normal_lupdf: real autodiff
+    <: int autodiff
+    min: real autodiff
+    FnNegInf__: real data
+    >: int autodiff
+    max: real autodiff
+    FnNegInf__: real data
+    -: real autodiff
+    *: real autodiff
+    log_diff_exp: real autodiff
+    normal_lcdf: real autodiff
+    normal_lcdf: real autodiff
+    FnLength__: int data
+    |}]

@@ -115,8 +115,18 @@ let truncate_dist ud_dists (id : Ast.identifier)
         , if Stan_math_signatures.is_stan_math_function_name (id.name ^ "_lpmf")
           then UnsizedType.UInt
           else UnsizedType.UReal (* close enough *) ) in
-  let targetme loc e =
-    {Stmt.meta= loc; pattern= TargetPE (Expr.Helpers.unary_op Operator.PMinus e)}
+  (* A call that this function adds, with its result type and the adlevel of its
+     arguments. *)
+  let app type_ loc kind args =
+    let adlevel =
+      UnsizedType.lub_ad_type (List.map ~f:Expr.Typed.adlevel_of args)
+      |> Option.get in
+    Expr.
+      { pattern= FunApp (kind, args)
+      ; meta= Typed.Meta.create ~type_ ~adlevel ~loc () } in
+  let targetme loc (e : Expr.Typed.t) =
+    { Stmt.meta= loc
+    ; pattern= TargetPE (app e.meta.type_ e.meta.loc (Operator PMinus) [e]) }
   in
   let trunc cond_op extrema (x : Expr.Typed.t) y =
     let smeta = x.meta.loc in
@@ -133,11 +143,11 @@ let truncate_dist ud_dists (id : Ast.identifier)
     { Stmt.meta= smeta
     ; pattern=
         IfElse
-          ( Expr.Helpers.binop (trans_expr ast_obs) cond_op x
+          ( app UInt smeta (Operator cond_op) [trans_expr ast_obs; x]
           , {Stmt.meta= smeta; pattern= TargetPE neg_inf}
           , Some y ) } in
-  let funapp meta kind name args =
-    Expr.{pattern= FunApp (trans_fn_kind kind name, args); meta} in
+  let funapp (meta : Expr.Typed.Meta.t) kind name args =
+    app UReal meta.loc (trans_fn_kind kind name) args in
   let maybe_promote_to_real tp lb : Expr.Typed.t =
     match (tp, Expr.Typed.type_of lb) with
     | UnsizedType.UInt, _ -> lb
@@ -147,9 +157,9 @@ let truncate_dist ud_dists (id : Ast.identifier)
     | _ -> lb in
   let inclusive_bound tp (lb : Expr.Typed.t) =
     if UnsizedType.is_int_type tp then
-      Expr.Helpers.binop lb Minus Expr.Helpers.one
+      app UInt lb.meta.loc (Operator Minus) [lb; Expr.Helpers.one]
     else maybe_promote_to_real tp lb in
-  let size_adjust e =
+  let size_adjust (e : Expr.Typed.t) =
     if
       (not (UnsizedType.is_container ast_obs.Ast.emeta.type_))
       || List.exists
@@ -160,9 +170,10 @@ let truncate_dist ud_dists (id : Ast.identifier)
     else
       (* Container y but scalar args - need to multiply by size(y) *)
       let trans_ast_obs = trans_expr ast_obs in
-      let type_ = {trans_ast_obs.meta with type_= UnsizedType.UReal} in
-      Expr.Helpers.binop e Times
-        (Expr.Helpers.internal_funapp FnLength [trans_ast_obs] type_) in
+      let length =
+        Expr.Helpers.internal_funapp FnLength [trans_ast_obs]
+          {Expr.Typed.Meta.empty with loc= trans_ast_obs.meta.loc} in
+      app UReal e.meta.loc (Operator Times) [e; length] in
   match t with
   | Ast.NoTruncate -> []
   | TruncateUpFrom lb ->
