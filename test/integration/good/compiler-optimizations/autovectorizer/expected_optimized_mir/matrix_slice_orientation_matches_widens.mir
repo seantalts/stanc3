@@ -26,8 +26,10 @@ log_prob {
     FnValidateSize__("w3", "N", N);
     matrix[N, N] w3;
     for(i in 1:N) {
-      w2[1:N, i] = y[i, 1:N];
-      w3[i, 1:N] = z[i, 1:N];
+      if((N >= 1)) {
+        w2[1:N, i] = y[i, 1:N];
+        w3[i, 1:N] = z[i, 1:N];
+      }
     }
   } }
 
@@ -46,8 +48,10 @@ rev_log_prob {
     FnValidateSize__("w3", "N", N);
     matrix[N, N] w3;
     for(i in 1:N) {
-      w2[1:N, i] = y[i, 1:N];
-      w3[i, 1:N] = z[i, 1:N];
+      if((N >= 1)) {
+        w2[1:N, i] = y[i, 1:N];
+        w3[i, 1:N] = z[i, 1:N];
+      }
     }
   } }
 

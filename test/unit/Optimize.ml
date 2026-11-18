@@ -3886,7 +3886,9 @@ let%expect_test "partial evaluation: transformed data sizes are trusted" =
     real mu;
     real sigma;
     {
-      target += normal_lpdf(w, mu, sigma);
+      if((N >= 1)) {
+        target += normal_lpdf(w, mu, sigma);
+      }
     }
     |}]
 
@@ -3912,7 +3914,9 @@ let%expect_test
     {
       vector[3] x;
       x = rep_vector(1.0, 3);
-      target += std_normal_lupdf(x[1:2]);
+      if(1) {
+        target += std_normal_lupdf(x[1:2]);
+      }
     }
     |}]
 
@@ -3946,7 +3950,9 @@ let%expect_test
       M = (N - 1);
       FnValidateSize__("z", "M", M);
       vector[M] z;
-      z[:] = y[1:M];
+      if((M >= 1)) {
+        z[:] = y[1:M];
+      }
       FnPrint__(z);
     }
     |}]
@@ -4551,4 +4557,156 @@ let%expect_test "inlining evaluates a condition with a draw once" =
 
     }
     c = (inline_condition_value8__ ? inline_f_rng_return6__ : 2.0);
+    |}]
+
+(* ---- vectorize_loops ---- *)
+
+let print_vectorized s =
+  let mir = vectorize_loops (reset_and_mir_of_string s) in
+  Fmt.str "@[<v>%a@]" (Fmt.list ~sep:Fmt.cut Stmt.Located.pp) mir.log_prob
+  |> print_endline
+
+let rec target_increments (s : Stmt.Located.t) =
+  match s.pattern with
+  | TargetPE e -> [e]
+  | p ->
+      Stmt.Pattern.fold
+        (fun acc _ -> acc)
+        (fun acc s -> acc @ target_increments s)
+        [] p
+
+let%expect_test "vectorize: a scaled density keeps its type and adlevel" =
+  let mir =
+    vectorize_loops
+      (reset_and_mir_of_string
+         {|
+      data {
+        int<lower=0> N;
+      }
+      parameters {
+        real mu;
+      }
+      model {
+        for (n in 1 : N) {
+          target += normal_lpdf(0.5 | mu, 1);
+        }
+      }
+      |})
+  in
+  List.concat_map mir.log_prob ~f:target_increments
+  |> List.iter ~f:(fun (e : Expr.Typed.t) ->
+      Fmt.pr "%a : %a %s@." Expr.Typed.pp e UnsizedType.pp e.meta.type_
+        (match e.meta.adlevel with
+        | AutoDiffable -> "autodiff"
+        | DataOnly -> "data"
+        | TupleAD _ -> "tuple"));
+  [%expect
+    {| ((N - (1 - 1)) * normal_lpdf(0.5, mu, promote(1, real, data))) : real autodiff |}]
+
+let%expect_test "vectorize: nothing runs when the loop has no iterations" =
+  print_vectorized
+    {|
+      data {
+        int<lower=0> N;
+        vector[N] y;
+      }
+      parameters {
+        real mu;
+      }
+      model {
+        for (n in 3 : 1) {
+          target += normal_lpdf(0.5 | mu, 1);
+        }
+        for (n in 1 : N) {
+          target += normal_lpdf(y[n] | mu, 1);
+        }
+      }
+      |};
+  [%expect
+    {|
+    real mu;
+    {
+      if((1 >= 3)) {
+        target += ((1 - (3 - 1)) * normal_lpdf(0.5, mu, promote(1, real, data)));
+      }
+      if((N >= 1)) {
+        target += normal_lpdf(y[1:N], mu, promote(1, real, data));
+      }
+    }
+    |}]
+
+let%expect_test "vectorize: a user function is called once per iteration" =
+  (* f prints, so calling it once instead of N times changes the output. *)
+  print_vectorized
+    {|
+      functions {
+        real f() {
+          print("f");
+          return 1;
+        }
+        real f(real x) {
+          return x;
+        }
+      }
+      data {
+        int<lower=0> N;
+        vector[N] y;
+      }
+      parameters {
+        real mu;
+      }
+      model {
+        for (n in 1 : N) {
+          target += normal_lpdf(y[n] | mu, f());
+        }
+        for (n in 1 : N) {
+          target += normal_lpdf(0.5 | mu, f());
+        }
+      }
+      |};
+  [%expect
+    {|
+    real mu;
+    {
+      for(n in 1:N) {
+        target += normal_lpdf(y[n], mu, f());
+      }
+      for(n in 1:N) {
+        target += normal_lpdf(0.5, mu, f());
+      }
+    }
+    |}]
+
+let%expect_test "vectorize: a user function in a loop bound is called once" =
+  print_vectorized
+    {|
+      functions {
+        int g() {
+          print("g");
+          return 2;
+        }
+        int g(real x) {
+          return 1;
+        }
+      }
+      data {
+        vector[3] y;
+      }
+      parameters {
+        real mu;
+      }
+      model {
+        for (n in 1 : g()) {
+          target += normal_lpdf(y[n] | mu, 1);
+        }
+      }
+      |};
+  [%expect
+    {|
+    real mu;
+    {
+      for(n in 1:g()) {
+        target += normal_lpdf(y[n], mu, promote(1, real, data));
+      }
+    }
     |}]

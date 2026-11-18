@@ -19,7 +19,9 @@ log_prob {
     eta = (FnReadParam(constrain Identity)(dims(N))(mem_pattern AoS))__(
     );
   {
-    target += bernoulli_logit_lupmf(y[1:N], eta[1:N]);
+    if((N >= 1)) {
+      target += bernoulli_logit_lupmf(y[1:N], eta[1:N]);
+    }
   } }
 
 rev_log_prob {
@@ -27,7 +29,9 @@ rev_log_prob {
     eta = (FnReadParam(constrain Identity)(dims(N))(mem_pattern AoS))__(
     );
   {
-    target += bernoulli_logit_lupmf(y[1:N], eta[1:N]);
+    if((N >= 1)) {
+      target += bernoulli_logit_lupmf(y[1:N], eta[1:N]);
+    }
   } }
 
 generate_quantities {

@@ -1,8 +1,8 @@
 // A density whose arguments do not depend on the loop variable. Every
 // iteration adds the same value. The loop becomes one call scaled by the
-// number of iterations.
+// number of iterations, and runs only when the loop has iterations.
 // Desired outcome: fully vectorized.
-//   `target += (N - (1 - 1)) * normal_lpdf(0.5, mu, sigma)`
+//   `if (N >= 1) target += (N - (1 - 1)) * normal_lpdf(0.5, mu, sigma)`
 data {
   int<lower=0> N;
 }

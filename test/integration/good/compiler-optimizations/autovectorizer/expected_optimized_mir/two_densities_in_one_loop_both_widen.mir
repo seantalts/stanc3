@@ -19,8 +19,10 @@ log_prob {
     x = (FnReadParam(constrain Identity)(dims(N))(mem_pattern AoS))__(
     );
   {
-    target += std_normal_lupdf(x[1:N]);
-    target += normal_lupdf(y[1:N], x[1:N], promote(1, real, data));
+    if((N >= 1)) {
+      target += std_normal_lupdf(x[1:N]);
+      target += normal_lupdf(y[1:N], x[1:N], promote(1, real, data));
+    }
   } }
 
 rev_log_prob {
@@ -28,8 +30,10 @@ rev_log_prob {
     x = (FnReadParam(constrain Identity)(dims(N))(mem_pattern AoS))__(
     );
   {
-    target += std_normal_lupdf(x[1:N]);
-    target += normal_lupdf(y[1:N], x[1:N], promote(1, real, data));
+    if((N >= 1)) {
+      target += std_normal_lupdf(x[1:N]);
+      target += normal_lupdf(y[1:N], x[1:N], promote(1, real, data));
+    }
   } }
 
 generate_quantities {

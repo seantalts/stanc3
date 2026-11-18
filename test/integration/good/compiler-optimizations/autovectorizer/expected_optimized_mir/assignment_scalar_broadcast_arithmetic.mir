@@ -21,7 +21,9 @@ log_prob {
   {
     FnValidateSize__("mu", "N", N);
     vector[N] mu;
-    mu[1:N] = (alpha + (beta * x[1:N]));
+    if((N >= 1)) {
+      mu[1:N] = (alpha + (beta * x[1:N]));
+    }
     target += normal_lpdf(mu, promote(0, real, data), promote(1, real, data));
   } }
 
@@ -33,7 +35,9 @@ rev_log_prob {
   {
     FnValidateSize__("mu", "N", N);
     vector[N] mu;
-    mu[1:N] = (alpha + (beta * x[1:N]));
+    if((N >= 1)) {
+      mu[1:N] = (alpha + (beta * x[1:N]));
+    }
     target += normal_lpdf(mu, promote(0, real, data), promote(1, real, data));
   } }
 

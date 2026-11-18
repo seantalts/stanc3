@@ -44,7 +44,9 @@ log_prob {
     FnValidateSize__("md3", "J", J);
     matrix[N, J] md3;
     for(i in 1:N) {
-      md3[i, 1:J] = (me[i, 1:J] .* mf[i, 1:J]);
+      if((J >= 1)) {
+        md3[i, 1:J] = (me[i, 1:J] .* mf[i, 1:J]);
+      }
       for(j in 1:J) {
         ma3[i, (j + 1)] = ((ma3[i, j] + mb[i, j]) + mc[i, j]);
       }
@@ -62,7 +64,9 @@ rev_log_prob {
     FnValidateSize__("md3", "J", J);
     matrix[N, J] md3;
     for(i in 1:N) {
-      md3[i, 1:J] = (me[i, 1:J] .* mf[i, 1:J]);
+      if((J >= 1)) {
+        md3[i, 1:J] = (me[i, 1:J] .* mf[i, 1:J]);
+      }
       for(j in 1:J) {
         ma3[i, (j + 1)] = ((ma3[i, j] + mb[i, j]) + mc[i, j]);
       }

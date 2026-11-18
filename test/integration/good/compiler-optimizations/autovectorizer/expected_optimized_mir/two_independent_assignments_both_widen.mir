@@ -26,8 +26,10 @@ log_prob {
     vector[N] v;
     FnValidateSize__("w", "N", N);
     vector[N] w;
-    v[1:N] = (x[1:N] + alpha);
-    w[1:N] = (y[1:N] * promote(2, real, data));
+    if((N >= 1)) {
+      v[1:N] = (x[1:N] + alpha);
+      w[1:N] = (y[1:N] * promote(2, real, data));
+    }
     target += normal_lpdf(v, w, promote(1, real, data));
   } }
 
@@ -40,8 +42,10 @@ rev_log_prob {
     vector[N] v;
     FnValidateSize__("w", "N", N);
     vector[N] w;
-    v[1:N] = (x[1:N] + alpha);
-    w[1:N] = (y[1:N] * promote(2, real, data));
+    if((N >= 1)) {
+      v[1:N] = (x[1:N] + alpha);
+      w[1:N] = (y[1:N] * promote(2, real, data));
+    }
     target += normal_lpdf(v, w, promote(1, real, data));
   } }
 

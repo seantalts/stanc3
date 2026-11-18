@@ -32,7 +32,9 @@ log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    target += normal_lpdf(y[2:N], alpha[county[2:N]], sigma);
+    if((N >= 2)) {
+      target += normal_lpdf(y[2:N], alpha[county[2:N]], sigma);
+    }
   } }
 
 rev_log_prob {
@@ -43,7 +45,9 @@ rev_log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    target += normal_lpdf(y[2:N], alpha[county[2:N]], sigma);
+    if((N >= 2)) {
+      target += normal_lpdf(y[2:N], alpha[county[2:N]], sigma);
+    }
   } }
 
 generate_quantities {

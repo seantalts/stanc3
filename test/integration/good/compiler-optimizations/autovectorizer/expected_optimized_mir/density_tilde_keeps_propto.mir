@@ -22,7 +22,9 @@ log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    target += normal_lupdf(y[1:N], mu[1:N], sigma);
+    if((N >= 1)) {
+      target += normal_lupdf(y[1:N], mu[1:N], sigma);
+    }
   } }
 
 rev_log_prob {
@@ -33,7 +35,9 @@ rev_log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    target += normal_lupdf(y[1:N], mu[1:N], sigma);
+    if((N >= 1)) {
+      target += normal_lupdf(y[1:N], mu[1:N], sigma);
+    }
   } }
 
 generate_quantities {

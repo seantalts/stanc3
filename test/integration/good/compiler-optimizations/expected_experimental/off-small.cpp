@@ -5,7 +5,7 @@ namespace off_small_model_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 34> locations_array__ =
+static constexpr std::array<const char*, 35> locations_array__ =
   {" (found before start of program)",
   " (in '../off-small.stan', line 10, column 2 to column 12)",
   " (in '../off-small.stan', line 11, column 2 to column 17)",
@@ -19,6 +19,7 @@ static constexpr std::array<const char*, 34> locations_array__ =
   " (in '../off-small.stan', line 21, column 2 to column 15)",
   " (in '../off-small.stan', line 22, column 2 to column 18)",
   " (in '../off-small.stan', line 28, column 4 to line 29, column 41)",
+  " (in '../off-small.stan', line 27, column 2 to line 29, column 41)",
   " (in '../off-small.stan', line 32, column 2 to column 23)",
   " (in '../off-small.stan', line 33, column 2 to column 22)",
   " (in '../off-small.stan', line 34, column 2 to column 23)",
@@ -73,75 +74,75 @@ class off_small_model final : public model_base_crtp<off_small_model> {
     try {
       int pos__;
       pos__ = 1;
-      current_statement__ = 19;
+      current_statement__ = 20;
       context__.validate_dims("data initialization", "J", "int",
         std::vector<size_t>{});
       J = std::numeric_limits<int>::min();
-      current_statement__ = 19;
-      stan::io::read_from_context(J, context__, "J");
-      current_statement__ = 19;
-      stan::math::check_greater_or_equal(function__, "J", J, 0);
       current_statement__ = 20;
+      stan::io::read_from_context(J, context__, "J");
+      current_statement__ = 20;
+      stan::math::check_greater_or_equal(function__, "J", J, 0);
+      current_statement__ = 21;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 20;
-      stan::io::read_from_context(N, context__, "N");
-      current_statement__ = 20;
-      stan::math::check_greater_or_equal(function__, "N", N, 0);
       current_statement__ = 21;
-      stan::math::validate_non_negative_index("person", "N", N);
+      stan::io::read_from_context(N, context__, "N");
+      current_statement__ = 21;
+      stan::math::check_greater_or_equal(function__, "N", N, 0);
       current_statement__ = 22;
+      stan::math::validate_non_negative_index("person", "N", N);
+      current_statement__ = 23;
       context__.validate_dims("data initialization", "person", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       person = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 22;
-      stan::io::read_from_context(person, context__, "person");
-      current_statement__ = 22;
-      stan::math::check_greater_or_equal(function__, "person", person, 1);
-      current_statement__ = 22;
-      stan::math::check_less_or_equal(function__, "person", person, J);
       current_statement__ = 23;
-      stan::math::validate_non_negative_index("time", "N", N);
+      stan::io::read_from_context(person, context__, "person");
+      current_statement__ = 23;
+      stan::math::check_greater_or_equal(function__, "person", person, 1);
+      current_statement__ = 23;
+      stan::math::check_less_or_equal(function__, "person", person, J);
       current_statement__ = 24;
+      stan::math::validate_non_negative_index("time", "N", N);
+      current_statement__ = 25;
       context__.validate_dims("data initialization", "time", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       time_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                       std::numeric_limits<double>::quiet_NaN());
       new (&time) Eigen::Map<Eigen::Matrix<double,-1,1>>(time_data__.data(),
         N);
-      current_statement__ = 24;
-      stan::io::read_from_context(time, context__, "time");
       current_statement__ = 25;
-      stan::math::validate_non_negative_index("treatment", "N", N);
+      stan::io::read_from_context(time, context__, "time");
       current_statement__ = 26;
+      stan::math::validate_non_negative_index("treatment", "N", N);
+      current_statement__ = 27;
       context__.validate_dims("data initialization", "treatment", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       treatment_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                            std::numeric_limits<double>::quiet_NaN());
       new (&treatment)
         Eigen::Map<Eigen::Matrix<double,-1,1>>(treatment_data__.data(), N);
-      current_statement__ = 26;
-      stan::io::read_from_context(treatment, context__, "treatment");
       current_statement__ = 27;
-      stan::math::validate_non_negative_index("y", "N", N);
+      stan::io::read_from_context(treatment, context__, "treatment");
       current_statement__ = 28;
+      stan::math::validate_non_negative_index("y", "N", N);
+      current_statement__ = 29;
       context__.validate_dims("data initialization", "y", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       y_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                    std::numeric_limits<double>::quiet_NaN());
       new (&y) Eigen::Map<Eigen::Matrix<double,-1,1>>(y_data__.data(), N);
-      current_statement__ = 28;
-      stan::io::read_from_context(y, context__, "y");
       current_statement__ = 29;
-      stan::math::validate_non_negative_index("eta1", "J", J);
+      stan::io::read_from_context(y, context__, "y");
       current_statement__ = 30;
-      stan::math::validate_non_negative_index("eta2", "J", J);
+      stan::math::validate_non_negative_index("eta1", "J", J);
       current_statement__ = 31;
-      stan::math::validate_non_negative_index("a1", "J", J);
+      stan::math::validate_non_negative_index("eta2", "J", J);
       current_statement__ = 32;
-      stan::math::validate_non_negative_index("a2", "J", J);
+      stan::math::validate_non_negative_index("a1", "J", J);
       current_statement__ = 33;
+      stan::math::validate_non_negative_index("a2", "J", J);
+      current_statement__ = 34;
       stan::math::validate_non_negative_index("y_hat", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -179,15 +180,16 @@ class off_small_model final : public model_base_crtp<off_small_model> {
     // suppress unused var warning
     (void) function__;
     try {
+      int lcm26__;
+      double lcm25__;
+      double lcm24__;
       double lcm23__;
       double lcm22__;
       double lcm21__;
       double lcm20__;
-      double lcm19__;
-      double lcm18__;
+      Eigen::Matrix<local_scalar_t__,-1,1> lcm19__;
+      Eigen::Matrix<double,-1,1> lcm18__;
       Eigen::Matrix<local_scalar_t__,-1,1> lcm17__;
-      Eigen::Matrix<double,-1,1> lcm16__;
-      Eigen::Matrix<local_scalar_t__,-1,1> lcm15__;
       current_statement__ = 1;
       auto beta = in__.template read<local_scalar_t__>();
       current_statement__ = 2;
@@ -216,39 +218,43 @@ class off_small_model final : public model_base_crtp<off_small_model> {
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(J, DUMMY_VAR__);
       Eigen::Matrix<local_scalar_t__,-1,1> y_hat =
         Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
-      stan::model::assign(lcm17__,
+      stan::model::assign(lcm19__,
         stan::math::fma(static_cast<double>(10), mu_a1,
-          stan::math::multiply(sigma_a1, eta1)), "assigning variable lcm17__");
-      stan::model::assign(a1, lcm17__, "assigning variable a1");
-      stan::model::assign(lcm15__,
+          stan::math::multiply(sigma_a1, eta1)), "assigning variable lcm19__");
+      stan::model::assign(a1, lcm19__, "assigning variable a1");
+      stan::model::assign(lcm17__,
         stan::math::fma(0.1, mu_a2, stan::math::multiply(sigma_a2, eta2)),
-        "assigning variable lcm15__");
-      stan::model::assign(a2, lcm15__, "assigning variable a2");
-      current_statement__ = 12;
-      stan::model::assign(y_hat,
-        stan::math::fma(
-          stan::model::rvalue(lcm15__, "lcm15__",
-            stan::model::index_multi(person)), time,
-          stan::math::fma(stan::math::multiply(beta, time), treatment,
+        "assigning variable lcm17__");
+      stan::model::assign(a2, lcm17__, "assigning variable a2");
+      current_statement__ = 13;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 12;
+        stan::model::assign(y_hat,
+          stan::math::fma(
             stan::model::rvalue(lcm17__, "lcm17__",
-              stan::model::index_multi(person)))), "assigning variable y_hat");
+              stan::model::index_multi(person)), time,
+            stan::math::fma(stan::math::multiply(beta, time), treatment,
+              stan::model::rvalue(lcm19__, "lcm19__",
+                stan::model::index_multi(person)))),
+          "assigning variable y_hat");
+      }
       {
-        current_statement__ = 13;
+        current_statement__ = 14;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(mu_a1,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 14;
+        current_statement__ = 15;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(eta1,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 15;
+        current_statement__ = 16;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(mu_a2,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 16;
+        current_statement__ = 17;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(eta2,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 17;
+        current_statement__ = 18;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(beta,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 18;
+        current_statement__ = 19;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(y, y_hat, sigma_y));
       }
     } catch (const std::exception& e) {
@@ -281,15 +287,16 @@ class off_small_model final : public model_base_crtp<off_small_model> {
     // suppress unused var warning
     (void) function__;
     try {
+      int lcm16__;
+      double lcm15__;
       double lcm14__;
       double lcm13__;
       double lcm12__;
       double lcm11__;
       double lcm10__;
-      double lcm9__;
-      stan::math::var_value<Eigen::Matrix<double,-1,1>> lcm8__;
-      Eigen::Matrix<double,-1,1> lcm7__;
-      stan::math::var_value<Eigen::Matrix<double,-1,1>> lcm6__;
+      stan::math::var_value<Eigen::Matrix<double,-1,1>> lcm9__;
+      Eigen::Matrix<double,-1,1> lcm8__;
+      stan::math::var_value<Eigen::Matrix<double,-1,1>> lcm7__;
       current_statement__ = 1;
       auto beta = in__.template read<local_scalar_t__>();
       current_statement__ = 2;
@@ -328,39 +335,43 @@ class off_small_model final : public model_base_crtp<off_small_model> {
         stan::math::var_value<Eigen::Matrix<double,-1,1>>(Eigen::Matrix<double,-1,1>::Constant(N,
                                                             std::numeric_limits<double>::quiet_NaN(
                                                               )));
-      stan::model::assign(lcm8__,
+      stan::model::assign(lcm9__,
         stan::math::fma(static_cast<double>(10), mu_a1,
-          stan::math::multiply(sigma_a1, eta1)), "assigning variable lcm8__");
-      stan::model::assign(a1, lcm8__, "assigning variable a1");
-      stan::model::assign(lcm6__,
+          stan::math::multiply(sigma_a1, eta1)), "assigning variable lcm9__");
+      stan::model::assign(a1, lcm9__, "assigning variable a1");
+      stan::model::assign(lcm7__,
         stan::math::fma(0.1, mu_a2, stan::math::multiply(sigma_a2, eta2)),
-        "assigning variable lcm6__");
-      stan::model::assign(a2, lcm6__, "assigning variable a2");
-      current_statement__ = 12;
-      stan::model::assign(y_hat,
-        stan::math::fma(
-          stan::model::rvalue(lcm6__, "lcm6__",
-            stan::model::index_multi(person)), time,
-          stan::math::fma(stan::math::multiply(beta, time), treatment,
-            stan::model::rvalue(lcm8__, "lcm8__",
-              stan::model::index_multi(person)))), "assigning variable y_hat");
+        "assigning variable lcm7__");
+      stan::model::assign(a2, lcm7__, "assigning variable a2");
+      current_statement__ = 13;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 12;
+        stan::model::assign(y_hat,
+          stan::math::fma(
+            stan::model::rvalue(lcm7__, "lcm7__",
+              stan::model::index_multi(person)), time,
+            stan::math::fma(stan::math::multiply(beta, time), treatment,
+              stan::model::rvalue(lcm9__, "lcm9__",
+                stan::model::index_multi(person)))),
+          "assigning variable y_hat");
+      }
       {
-        current_statement__ = 13;
+        current_statement__ = 14;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(mu_a1,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 14;
+        current_statement__ = 15;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(eta1,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 15;
+        current_statement__ = 16;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(mu_a2,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 16;
+        current_statement__ = 17;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(eta2,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 17;
+        current_statement__ = 18;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(beta,
                          static_cast<double>(0), static_cast<double>(1)));
-        current_statement__ = 18;
+        current_statement__ = 19;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(y, y_hat, sigma_y));
       }
     } catch (const std::exception& e) {
@@ -404,6 +415,7 @@ class off_small_model final : public model_base_crtp<off_small_model> {
     // suppress unused var warning
     (void) function__;
     try {
+      int lcm6__;
       int lcm5__;
       int lcm4__;
       Eigen::Matrix<double,-1,1> lcm3__;
@@ -461,14 +473,18 @@ class off_small_model final : public model_base_crtp<off_small_model> {
         stan::math::fma(0.1, mu_a2, stan::math::multiply(sigma_a2, eta2)),
         "assigning variable lcm1__");
       stan::model::assign(a2, lcm1__, "assigning variable a2");
-      current_statement__ = 12;
-      stan::model::assign(y_hat,
-        stan::math::fma(
-          stan::model::rvalue(lcm1__, "lcm1__",
-            stan::model::index_multi(person)), time,
-          stan::math::fma(stan::math::multiply(beta, time), treatment,
-            stan::model::rvalue(lcm3__, "lcm3__",
-              stan::model::index_multi(person)))), "assigning variable y_hat");
+      current_statement__ = 13;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 12;
+        stan::model::assign(y_hat,
+          stan::math::fma(
+            stan::model::rvalue(lcm1__, "lcm1__",
+              stan::model::index_multi(person)), time,
+            stan::math::fma(stan::math::multiply(beta, time), treatment,
+              stan::model::rvalue(lcm3__, "lcm3__",
+                stan::model::index_multi(person)))),
+          "assigning variable y_hat");
+      }
       if (emit_transformed_parameters__) {
         out__.write(lcm3__);
         out__.write(lcm1__);

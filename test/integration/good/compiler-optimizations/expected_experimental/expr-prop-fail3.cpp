@@ -5,7 +5,7 @@ namespace expr_prop_fail3_model_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 51> locations_array__ =
+static constexpr std::array<const char*, 52> locations_array__ =
   {" (found before start of program)",
   " (in '../expr-prop-fail3.stan', line 19, column 2 to column 18)",
   " (in '../expr-prop-fail3.stan', line 20, column 2 to column 18)",
@@ -20,6 +20,7 @@ static constexpr std::array<const char*, 51> locations_array__ =
   " (in '../expr-prop-fail3.stan', line 29, column 2 to column 35)",
   " (in '../expr-prop-fail3.stan', line 32, column 2 to column 18)",
   " (in '../expr-prop-fail3.stan', line 35, column 4 to line 38, column 35)",
+  " (in '../expr-prop-fail3.stan', line 34, column 2 to line 38, column 35)",
   " (in '../expr-prop-fail3.stan', line 41, column 2 to column 25)",
   " (in '../expr-prop-fail3.stan', line 42, column 2 to column 25)",
   " (in '../expr-prop-fail3.stan', line 43, column 2 to column 25)",
@@ -99,184 +100,184 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
     try {
       int pos__;
       pos__ = 1;
-      current_statement__ = 21;
+      current_statement__ = 22;
       context__.validate_dims("data initialization", "N", "int",
         std::vector<size_t>{});
       N = std::numeric_limits<int>::min();
-      current_statement__ = 21;
-      stan::io::read_from_context(N, context__, "N");
-      current_statement__ = 21;
-      stan::math::check_greater_or_equal(function__, "N", N, 0);
       current_statement__ = 22;
+      stan::io::read_from_context(N, context__, "N");
+      current_statement__ = 22;
+      stan::math::check_greater_or_equal(function__, "N", N, 0);
+      current_statement__ = 23;
       context__.validate_dims("data initialization", "n_age", "int",
         std::vector<size_t>{});
       n_age = std::numeric_limits<int>::min();
-      current_statement__ = 22;
-      stan::io::read_from_context(n_age, context__, "n_age");
-      current_statement__ = 22;
-      stan::math::check_greater_or_equal(function__, "n_age", n_age, 0);
       current_statement__ = 23;
+      stan::io::read_from_context(n_age, context__, "n_age");
+      current_statement__ = 23;
+      stan::math::check_greater_or_equal(function__, "n_age", n_age, 0);
+      current_statement__ = 24;
       context__.validate_dims("data initialization", "n_age_edu", "int",
         std::vector<size_t>{});
       n_age_edu = std::numeric_limits<int>::min();
-      current_statement__ = 23;
+      current_statement__ = 24;
       stan::io::read_from_context(n_age_edu, context__, "n_age_edu");
-      current_statement__ = 23;
+      current_statement__ = 24;
       stan::math::check_greater_or_equal(function__, "n_age_edu", n_age_edu,
         0);
-      current_statement__ = 24;
+      current_statement__ = 25;
       context__.validate_dims("data initialization", "n_edu", "int",
         std::vector<size_t>{});
       n_edu = std::numeric_limits<int>::min();
-      current_statement__ = 24;
-      stan::io::read_from_context(n_edu, context__, "n_edu");
-      current_statement__ = 24;
-      stan::math::check_greater_or_equal(function__, "n_edu", n_edu, 0);
       current_statement__ = 25;
+      stan::io::read_from_context(n_edu, context__, "n_edu");
+      current_statement__ = 25;
+      stan::math::check_greater_or_equal(function__, "n_edu", n_edu, 0);
+      current_statement__ = 26;
       context__.validate_dims("data initialization", "n_region_full", "int",
         std::vector<size_t>{});
       n_region_full = std::numeric_limits<int>::min();
-      current_statement__ = 25;
+      current_statement__ = 26;
       stan::io::read_from_context(n_region_full, context__, "n_region_full");
-      current_statement__ = 25;
+      current_statement__ = 26;
       stan::math::check_greater_or_equal(function__, "n_region_full",
         n_region_full, 0);
-      current_statement__ = 26;
+      current_statement__ = 27;
       context__.validate_dims("data initialization", "n_state", "int",
         std::vector<size_t>{});
       n_state = std::numeric_limits<int>::min();
-      current_statement__ = 26;
-      stan::io::read_from_context(n_state, context__, "n_state");
-      current_statement__ = 26;
-      stan::math::check_greater_or_equal(function__, "n_state", n_state, 0);
       current_statement__ = 27;
-      stan::math::validate_non_negative_index("age", "N", N);
+      stan::io::read_from_context(n_state, context__, "n_state");
+      current_statement__ = 27;
+      stan::math::check_greater_or_equal(function__, "n_state", n_state, 0);
       current_statement__ = 28;
+      stan::math::validate_non_negative_index("age", "N", N);
+      current_statement__ = 29;
       context__.validate_dims("data initialization", "age", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       age = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 28;
-      stan::io::read_from_context(age, context__, "age");
-      current_statement__ = 28;
-      stan::math::check_greater_or_equal(function__, "age", age, 0);
-      current_statement__ = 28;
-      stan::math::check_less_or_equal(function__, "age", age, n_age);
       current_statement__ = 29;
-      stan::math::validate_non_negative_index("age_edu", "N", N);
+      stan::io::read_from_context(age, context__, "age");
+      current_statement__ = 29;
+      stan::math::check_greater_or_equal(function__, "age", age, 0);
+      current_statement__ = 29;
+      stan::math::check_less_or_equal(function__, "age", age, n_age);
       current_statement__ = 30;
+      stan::math::validate_non_negative_index("age_edu", "N", N);
+      current_statement__ = 31;
       context__.validate_dims("data initialization", "age_edu", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       age_edu = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 30;
+      current_statement__ = 31;
       stan::io::read_from_context(age_edu, context__, "age_edu");
-      current_statement__ = 30;
+      current_statement__ = 31;
       stan::math::check_greater_or_equal(function__, "age_edu", age_edu, 0);
-      current_statement__ = 30;
+      current_statement__ = 31;
       stan::math::check_less_or_equal(function__, "age_edu", age_edu,
         n_age_edu);
-      current_statement__ = 31;
-      stan::math::validate_non_negative_index("black", "N", N);
       current_statement__ = 32;
+      stan::math::validate_non_negative_index("black", "N", N);
+      current_statement__ = 33;
       context__.validate_dims("data initialization", "black", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       black_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                        std::numeric_limits<double>::quiet_NaN());
       new (&black)
         Eigen::Map<Eigen::Matrix<double,-1,1>>(black_data__.data(), N);
-      current_statement__ = 32;
-      stan::io::read_from_context(black, context__, "black");
-      current_statement__ = 32;
-      stan::math::check_greater_or_equal(function__, "black", black, 0);
-      current_statement__ = 32;
-      stan::math::check_less_or_equal(function__, "black", black, 1);
       current_statement__ = 33;
-      stan::math::validate_non_negative_index("edu", "N", N);
+      stan::io::read_from_context(black, context__, "black");
+      current_statement__ = 33;
+      stan::math::check_greater_or_equal(function__, "black", black, 0);
+      current_statement__ = 33;
+      stan::math::check_less_or_equal(function__, "black", black, 1);
       current_statement__ = 34;
+      stan::math::validate_non_negative_index("edu", "N", N);
+      current_statement__ = 35;
       context__.validate_dims("data initialization", "edu", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       edu = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 34;
-      stan::io::read_from_context(edu, context__, "edu");
-      current_statement__ = 34;
-      stan::math::check_greater_or_equal(function__, "edu", edu, 0);
-      current_statement__ = 34;
-      stan::math::check_less_or_equal(function__, "edu", edu, n_edu);
       current_statement__ = 35;
-      stan::math::validate_non_negative_index("female", "N", N);
+      stan::io::read_from_context(edu, context__, "edu");
+      current_statement__ = 35;
+      stan::math::check_greater_or_equal(function__, "edu", edu, 0);
+      current_statement__ = 35;
+      stan::math::check_less_or_equal(function__, "edu", edu, n_edu);
       current_statement__ = 36;
+      stan::math::validate_non_negative_index("female", "N", N);
+      current_statement__ = 37;
       context__.validate_dims("data initialization", "female", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       female_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                         std::numeric_limits<double>::quiet_NaN());
       new (&female)
         Eigen::Map<Eigen::Matrix<double,-1,1>>(female_data__.data(), N);
-      current_statement__ = 36;
-      stan::io::read_from_context(female, context__, "female");
-      current_statement__ = 36;
-      stan::math::check_greater_or_equal(function__, "female", female, 0);
-      current_statement__ = 36;
-      stan::math::check_less_or_equal(function__, "female", female, 1);
       current_statement__ = 37;
-      stan::math::validate_non_negative_index("region_full", "N", N);
+      stan::io::read_from_context(female, context__, "female");
+      current_statement__ = 37;
+      stan::math::check_greater_or_equal(function__, "female", female, 0);
+      current_statement__ = 37;
+      stan::math::check_less_or_equal(function__, "female", female, 1);
       current_statement__ = 38;
+      stan::math::validate_non_negative_index("region_full", "N", N);
+      current_statement__ = 39;
       context__.validate_dims("data initialization", "region_full", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       region_full = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 38;
+      current_statement__ = 39;
       stan::io::read_from_context(region_full, context__, "region_full");
-      current_statement__ = 38;
+      current_statement__ = 39;
       stan::math::check_greater_or_equal(function__, "region_full",
         region_full, 0);
-      current_statement__ = 38;
+      current_statement__ = 39;
       stan::math::check_less_or_equal(function__, "region_full", region_full,
         n_region_full);
-      current_statement__ = 39;
-      stan::math::validate_non_negative_index("state", "N", N);
       current_statement__ = 40;
+      stan::math::validate_non_negative_index("state", "N", N);
+      current_statement__ = 41;
       context__.validate_dims("data initialization", "state", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       state = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 40;
-      stan::io::read_from_context(state, context__, "state");
-      current_statement__ = 40;
-      stan::math::check_greater_or_equal(function__, "state", state, 0);
-      current_statement__ = 40;
-      stan::math::check_less_or_equal(function__, "state", state, n_state);
       current_statement__ = 41;
-      stan::math::validate_non_negative_index("v_prev_full", "N", N);
+      stan::io::read_from_context(state, context__, "state");
+      current_statement__ = 41;
+      stan::math::check_greater_or_equal(function__, "state", state, 0);
+      current_statement__ = 41;
+      stan::math::check_less_or_equal(function__, "state", state, n_state);
       current_statement__ = 42;
+      stan::math::validate_non_negative_index("v_prev_full", "N", N);
+      current_statement__ = 43;
       context__.validate_dims("data initialization", "v_prev_full", "double",
         std::vector<size_t>{static_cast<size_t>(N)});
       v_prev_full_data__ = Eigen::Matrix<double,-1,1>::Constant(N,
                              std::numeric_limits<double>::quiet_NaN());
       new (&v_prev_full)
         Eigen::Map<Eigen::Matrix<double,-1,1>>(v_prev_full_data__.data(), N);
-      current_statement__ = 42;
-      stan::io::read_from_context(v_prev_full, context__, "v_prev_full");
       current_statement__ = 43;
-      stan::math::validate_non_negative_index("y", "N", N);
+      stan::io::read_from_context(v_prev_full, context__, "v_prev_full");
       current_statement__ = 44;
+      stan::math::validate_non_negative_index("y", "N", N);
+      current_statement__ = 45;
       context__.validate_dims("data initialization", "y", "int",
         std::vector<size_t>{static_cast<size_t>(N)});
       y = std::vector<int>(N, std::numeric_limits<int>::min());
-      current_statement__ = 44;
-      stan::io::read_from_context(y, context__, "y");
-      current_statement__ = 44;
-      stan::math::check_greater_or_equal(function__, "y", y, 0);
-      current_statement__ = 44;
-      stan::math::check_less_or_equal(function__, "y", y, 1);
       current_statement__ = 45;
-      stan::math::validate_non_negative_index("a", "n_age", n_age);
+      stan::io::read_from_context(y, context__, "y");
+      current_statement__ = 45;
+      stan::math::check_greater_or_equal(function__, "y", y, 0);
+      current_statement__ = 45;
+      stan::math::check_less_or_equal(function__, "y", y, 1);
       current_statement__ = 46;
-      stan::math::validate_non_negative_index("b", "n_edu", n_edu);
+      stan::math::validate_non_negative_index("a", "n_age", n_age);
       current_statement__ = 47;
-      stan::math::validate_non_negative_index("c", "n_age_edu", n_age_edu);
+      stan::math::validate_non_negative_index("b", "n_edu", n_edu);
       current_statement__ = 48;
-      stan::math::validate_non_negative_index("d", "n_state", n_state);
+      stan::math::validate_non_negative_index("c", "n_age_edu", n_age_edu);
       current_statement__ = 49;
+      stan::math::validate_non_negative_index("d", "n_state", n_state);
+      current_statement__ = 50;
       stan::math::validate_non_negative_index("e", "n_region_full",
         n_region_full);
-      current_statement__ = 50;
+      current_statement__ = 51;
       stan::math::validate_non_negative_index("y_hat", "N", N);
     } catch (const std::exception& e) {
       stan::lang::rethrow_located(e, locations_array__[current_statement__]);
@@ -315,14 +316,15 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
     // suppress unused var warning
     (void) function__;
     try {
-      Eigen::Matrix<double,-1,1> lcm19__;
+      int lcm22__;
+      Eigen::Matrix<double,-1,1> lcm21__;
+      double lcm20__;
+      double lcm19__;
       double lcm18__;
       double lcm17__;
       double lcm16__;
       double lcm15__;
       double lcm14__;
-      double lcm13__;
-      double lcm12__;
       current_statement__ = 1;
       auto a =
         in__.template read<Eigen::Matrix<local_scalar_t__,-1,1>>(n_age);
@@ -361,55 +363,59 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
       auto sigma_e =
         in__.template read_constrain_lub<local_scalar_t__, jacobian__>(0,
           100, lp__);
-      Eigen::Matrix<local_scalar_t__,-1,1> y_hat;
-      current_statement__ = 13;
-      stan::model::assign(y_hat,
-        stan::math::add(
+      Eigen::Matrix<local_scalar_t__,-1,1> y_hat =
+        Eigen::Matrix<local_scalar_t__,-1,1>::Constant(N, DUMMY_VAR__);
+      current_statement__ = 14;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 13;
+        stan::model::assign(y_hat,
           stan::math::add(
             stan::math::add(
               stan::math::add(
                 stan::math::add(
-                  stan::math::fma(
-                    stan::model::rvalue(beta, "beta",
-                      stan::model::index_uni(4)), v_prev_full,
+                  stan::math::add(
                     stan::math::fma(
-                      stan::math::multiply(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(5)), female), black,
+                      stan::model::rvalue(beta, "beta",
+                        stan::model::index_uni(4)), v_prev_full,
                       stan::math::fma(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(3)), female,
+                        stan::math::multiply(
+                          stan::model::rvalue(beta, "beta",
+                            stan::model::index_uni(5)), female), black,
                         stan::math::fma(
                           stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(2)), black,
-                          stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(1)))))),
-                  stan::model::rvalue(a, "a", stan::model::index_multi(age))),
-                stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
-              stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
-            stan::model::rvalue(d, "d", stan::model::index_multi(state))),
-          stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
-        "assigning variable y_hat");
+                            stan::model::index_uni(3)), female,
+                          stan::math::fma(
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(2)), black,
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(1)))))),
+                    stan::model::rvalue(a, "a", stan::model::index_multi(age))),
+                  stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
+                stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
+              stan::model::rvalue(d, "d", stan::model::index_multi(state))),
+            stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
+          "assigning variable y_hat");
+      }
       {
-        current_statement__ = 14;
+        current_statement__ = 15;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(a,
                          static_cast<double>(0), sigma_a));
-        current_statement__ = 15;
+        current_statement__ = 16;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(b,
                          static_cast<double>(0), sigma_b));
-        current_statement__ = 16;
+        current_statement__ = 17;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(c,
                          static_cast<double>(0), sigma_c));
-        current_statement__ = 17;
+        current_statement__ = 18;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(d,
                          static_cast<double>(0), sigma_d));
-        current_statement__ = 18;
+        current_statement__ = 19;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(e,
                          static_cast<double>(0), sigma_e));
-        current_statement__ = 19;
+        current_statement__ = 20;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(beta,
                          static_cast<double>(0), static_cast<double>(100)));
-        current_statement__ = 20;
+        current_statement__ = 21;
         lp_accum__.add(stan::math::bernoulli_logit_lpmf<propto__>(y, y_hat));
       }
     } catch (const std::exception& e) {
@@ -442,14 +448,15 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
     // suppress unused var warning
     (void) function__;
     try {
-      Eigen::Matrix<double,-1,1> lcm11__;
+      int lcm13__;
+      Eigen::Matrix<double,-1,1> lcm12__;
+      double lcm11__;
       double lcm10__;
       double lcm9__;
       double lcm8__;
       double lcm7__;
       double lcm6__;
       double lcm5__;
-      double lcm4__;
       current_statement__ = 1;
       auto a =
         in__.template read<
@@ -494,55 +501,61 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
       auto sigma_e =
         in__.template read_constrain_lub<local_scalar_t__, jacobian__>(0,
           100, lp__);
-      stan::math::var_value<Eigen::Matrix<double,-1,1>> y_hat;
-      current_statement__ = 13;
-      stan::model::assign(y_hat,
-        stan::math::add(
+      stan::math::var_value<Eigen::Matrix<double,-1,1>> y_hat =
+        stan::math::var_value<Eigen::Matrix<double,-1,1>>(Eigen::Matrix<double,-1,1>::Constant(N,
+                                                            std::numeric_limits<double>::quiet_NaN(
+                                                              )));
+      current_statement__ = 14;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 13;
+        stan::model::assign(y_hat,
           stan::math::add(
             stan::math::add(
               stan::math::add(
                 stan::math::add(
-                  stan::math::fma(
-                    stan::model::rvalue(beta, "beta",
-                      stan::model::index_uni(4)), v_prev_full,
+                  stan::math::add(
                     stan::math::fma(
-                      stan::math::multiply(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(5)), female), black,
+                      stan::model::rvalue(beta, "beta",
+                        stan::model::index_uni(4)), v_prev_full,
                       stan::math::fma(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(3)), female,
+                        stan::math::multiply(
+                          stan::model::rvalue(beta, "beta",
+                            stan::model::index_uni(5)), female), black,
                         stan::math::fma(
                           stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(2)), black,
-                          stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(1)))))),
-                  stan::model::rvalue(a, "a", stan::model::index_multi(age))),
-                stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
-              stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
-            stan::model::rvalue(d, "d", stan::model::index_multi(state))),
-          stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
-        "assigning variable y_hat");
+                            stan::model::index_uni(3)), female,
+                          stan::math::fma(
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(2)), black,
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(1)))))),
+                    stan::model::rvalue(a, "a", stan::model::index_multi(age))),
+                  stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
+                stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
+              stan::model::rvalue(d, "d", stan::model::index_multi(state))),
+            stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
+          "assigning variable y_hat");
+      }
       {
-        current_statement__ = 14;
+        current_statement__ = 15;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(a,
                          static_cast<double>(0), sigma_a));
-        current_statement__ = 15;
+        current_statement__ = 16;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(b,
                          static_cast<double>(0), sigma_b));
-        current_statement__ = 16;
+        current_statement__ = 17;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(c,
                          static_cast<double>(0), sigma_c));
-        current_statement__ = 17;
+        current_statement__ = 18;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(d,
                          static_cast<double>(0), sigma_d));
-        current_statement__ = 18;
+        current_statement__ = 19;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(e,
                          static_cast<double>(0), sigma_e));
-        current_statement__ = 19;
+        current_statement__ = 20;
         lp_accum__.add(stan::math::normal_lpdf<propto__>(beta,
                          static_cast<double>(0), static_cast<double>(100)));
-        current_statement__ = 20;
+        current_statement__ = 21;
         lp_accum__.add(stan::math::bernoulli_logit_lpmf<propto__>(y, y_hat));
       }
     } catch (const std::exception& e) {
@@ -586,6 +599,7 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
     // suppress unused var warning
     (void) function__;
     try {
+      int lcm4__;
       int lcm3__;
       int lcm2__;
       Eigen::Matrix<double,-1,1> lcm1__;
@@ -646,34 +660,37 @@ class expr_prop_fail3_model final : public model_base_crtp<expr_prop_fail3_model
             stan::math::primitive_value(emit_generated_quantities__)))) {
         return ;
       }
-      current_statement__ = 13;
-      stan::model::assign(y_hat,
-        stan::math::add(
+      current_statement__ = 14;
+      if (stan::math::logical_gte(N, 1)) {
+        current_statement__ = 13;
+        stan::model::assign(y_hat,
           stan::math::add(
             stan::math::add(
               stan::math::add(
                 stan::math::add(
-                  stan::math::fma(
-                    stan::model::rvalue(beta, "beta",
-                      stan::model::index_uni(4)), v_prev_full,
+                  stan::math::add(
                     stan::math::fma(
-                      stan::math::multiply(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(5)), female), black,
+                      stan::model::rvalue(beta, "beta",
+                        stan::model::index_uni(4)), v_prev_full,
                       stan::math::fma(
-                        stan::model::rvalue(beta, "beta",
-                          stan::model::index_uni(3)), female,
+                        stan::math::multiply(
+                          stan::model::rvalue(beta, "beta",
+                            stan::model::index_uni(5)), female), black,
                         stan::math::fma(
                           stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(2)), black,
-                          stan::model::rvalue(beta, "beta",
-                            stan::model::index_uni(1)))))),
-                  stan::model::rvalue(a, "a", stan::model::index_multi(age))),
-                stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
-              stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
-            stan::model::rvalue(d, "d", stan::model::index_multi(state))),
-          stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
-        "assigning variable y_hat");
+                            stan::model::index_uni(3)), female,
+                          stan::math::fma(
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(2)), black,
+                            stan::model::rvalue(beta, "beta",
+                              stan::model::index_uni(1)))))),
+                    stan::model::rvalue(a, "a", stan::model::index_multi(age))),
+                  stan::model::rvalue(b, "b", stan::model::index_multi(edu))),
+                stan::model::rvalue(c, "c", stan::model::index_multi(age_edu))),
+              stan::model::rvalue(d, "d", stan::model::index_multi(state))),
+            stan::model::rvalue(e, "e", stan::model::index_multi(region_full))),
+          "assigning variable y_hat");
+      }
       if (emit_transformed_parameters__) {
         out__.write(y_hat);
       }

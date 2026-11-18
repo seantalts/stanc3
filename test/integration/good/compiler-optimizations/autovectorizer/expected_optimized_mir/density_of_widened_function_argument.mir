@@ -13,7 +13,9 @@ log_prob {
     g = (FnReadParam(constrain Identity)(dims(M))(mem_pattern AoS))__(
     );
   {
-    target += std_normal_lupdf(exp(g[1:M]));
+    if((M >= 1)) {
+      target += std_normal_lupdf(exp(g[1:M]));
+    }
   } }
 
 rev_log_prob {
@@ -21,7 +23,9 @@ rev_log_prob {
     g = (FnReadParam(constrain Identity)(dims(M))(mem_pattern AoS))__(
     );
   {
-    target += std_normal_lupdf(exp(g[1:M]));
+    if((M >= 1)) {
+      target += std_normal_lupdf(exp(g[1:M]));
+    }
   } }
 
 generate_quantities {

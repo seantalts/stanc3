@@ -22,8 +22,10 @@ log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    profile("lik"){
-      target += normal_lpdf(y[1:N], x[1:N], sigma);
+    if((N >= 1)) {
+      profile("lik"){
+        target += normal_lpdf(y[1:N], x[1:N], sigma);
+      }
     }
   } }
 
@@ -32,8 +34,10 @@ rev_log_prob {
     sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
     );
   {
-    profile("lik"){
-      target += normal_lpdf(y[1:N], x[1:N], sigma);
+    if((N >= 1)) {
+      profile("lik"){
+        target += normal_lpdf(y[1:N], x[1:N], sigma);
+      }
     }
   } }
 

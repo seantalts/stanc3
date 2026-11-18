@@ -23,7 +23,9 @@ log_prob {
     for(i in 1:N) {
       FnValidateSize__("g", "M", M);
       vector[M] g;
-      g[1:M] = x[1:M];
+      if((M >= 1)) {
+        g[1:M] = x[1:M];
+      }
       FnPrint__(g);
     }
   } }
@@ -33,7 +35,9 @@ rev_log_prob {
     for(i in 1:N) {
       FnValidateSize__("g", "M", M);
       vector[M] g;
-      g[1:M] = x[1:M];
+      if((M >= 1)) {
+        g[1:M] = x[1:M];
+      }
       FnPrint__(g);
     }
   } }

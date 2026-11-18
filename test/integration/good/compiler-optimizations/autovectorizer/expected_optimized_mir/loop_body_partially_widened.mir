@@ -17,8 +17,10 @@ log_prob {
   {
     FnValidateSize__("a", "N", N);
     vector[N] a;
-    target += std_normal_lupdf(x[1:N]);
-    a[1:N] = exp(x[1:N]);
+    if((N >= 1)) {
+      target += std_normal_lupdf(x[1:N]);
+      a[1:N] = exp(x[1:N]);
+    }
     for(i in 1:N) {
       FnPrint__(x[i]);
     }
@@ -28,8 +30,10 @@ rev_log_prob {
   {
     FnValidateSize__("a", "N", N);
     vector[N] a;
-    target += std_normal_lupdf(x[1:N]);
-    a[1:N] = exp(x[1:N]);
+    if((N >= 1)) {
+      target += std_normal_lupdf(x[1:N]);
+      a[1:N] = exp(x[1:N]);
+    }
     for(i in 1:N) {
       FnPrint__(x[i]);
     }

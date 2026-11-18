@@ -18,7 +18,9 @@ log_prob {
   {
     FnValidateSize__("v", "N", N);
     array[real, N] v;
-    v[1:N] = exp(x[1:N]);
+    if((N >= 1)) {
+      v[1:N] = exp(x[1:N]);
+    }
     target += normal_lpdf(v, promote(0, real, data), sigma);
   } }
 
@@ -29,7 +31,9 @@ rev_log_prob {
   {
     FnValidateSize__("v", "N", N);
     array[real, N] v;
-    v[1:N] = exp(x[1:N]);
+    if((N >= 1)) {
+      v[1:N] = exp(x[1:N]);
+    }
     target += normal_lpdf(v, promote(0, real, data), sigma);
   } }
 

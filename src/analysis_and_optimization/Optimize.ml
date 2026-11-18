@@ -933,9 +933,16 @@ let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
     loopvar lower upper body : Stmt.Located.t =
   let dont_read = conflict_info.writes in
   let dont_write = Set.Poly.union conflict_info.reads conflict_info.conflicts in
+  (* A user function can print, so it must keep being called as often as the
+     loop calls it. *)
+  let calls_user_function =
+    Expr.Helpers.contains_fn_kind (function
+      | UserDefined _ -> true
+      | _ -> false) in
   let can_vectorize_expr e =
-    can_duplicate_expr e && Set.Poly.disjoint dont_read (expr_var_names_set e)
-  in
+    can_duplicate_expr e
+    && (not (calls_user_function e))
+    && Set.Poly.disjoint dont_read (expr_var_names_set e) in
   let is_loop_invariant_expr e =
     (* this function is only called in context where we have already checked
        can_vectorize_expr e *)
@@ -1047,9 +1054,10 @@ let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
         | Scalar args' ->
             let funapp =
               {e with pattern= FunApp (StanLib (name, suffix), args')} in
+            let trips =
+              Expr.Helpers.(binop upper Minus (binop lower Minus one)) in
             ( TargetPE
-                Expr.Helpers.(
-                  binop (binop upper Minus (binop lower Minus one)) Times funapp)
+                {funapp with pattern= FunApp (Operator Times, [trips; funapp])}
               |> swrap_vec
             , None )
         | Widened args'' -> (
@@ -1073,18 +1081,25 @@ let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
         | _ -> dont_vectorize)
     | _ -> dont_vectorize in
   let swrap pattern = Stmt.{pattern; meta} in
+  (* The loop may run zero times, and then the vectorized statements must not
+     run either. *)
+  let when_nonempty stmts =
+    IfElse
+      (Expr.Helpers.binop upper Geq lower, Block (List.rev stmts) |> swrap, None)
+    |> swrap in
   if
-    conflict_info.breaks
+    conflict_info.breaks || calls_user_function lower
+    || calls_user_function upper
     || not (Set.Poly.disjoint conflict_info.writes (expr_var_names_set upper))
   then For {loopvar; lower; upper; body} |> swrap
   else
     match collect [] body with
     | [], Some body -> For {loopvar; lower; upper; body} |> swrap
+    | [], None -> SList [] |> swrap
     | stmts, Some body ->
-        SList ((For {loopvar; lower; upper; body} |> swrap) :: stmts |> List.rev)
+        SList [when_nonempty stmts; For {loopvar; lower; upper; body} |> swrap]
         |> swrap
-    | [stmt], None -> stmt
-    | stmts, None -> SList (stmts |> List.rev) |> swrap
+    | stmts, None -> when_nonempty stmts
 
 let rec vectorize_stmt : Stmt.Located.t -> Stmt.Located.t = function
   | {pattern= For {loopvar; lower; upper; body}; meta}

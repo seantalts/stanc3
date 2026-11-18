@@ -5,7 +5,7 @@ namespace unenforce_initialize_omni_model_namespace {
 using stan::model::model_base_crtp;
 using namespace stan::math;
 stan::math::profile_map profiles__;
-static constexpr std::array<const char*, 13> locations_array__ =
+static constexpr std::array<const char*, 14> locations_array__ =
   {" (found before start of program)",
   " (in '../unenforce-initialize-omni.stan', line 2, column 2 to column 14)",
   " (in '../unenforce-initialize-omni.stan', line 4, column 2 to column 26)",
@@ -15,6 +15,7 @@ static constexpr std::array<const char*, 13> locations_array__ =
   " (in '../unenforce-initialize-omni.stan', line 11, column 2 to column 28)",
   " (in '../unenforce-initialize-omni.stan', line 13, column 2 to column 19)",
   " (in '../unenforce-initialize-omni.stan', line 18, column 8 to column 36)",
+  " (in '../unenforce-initialize-omni.stan', line 17, column 6 to line 19, column 7)",
   " (in '../unenforce-initialize-omni.stan', line 16, column 4 to line 20, column 5)",
   " (in '../unenforce-initialize-omni.stan', line 15, column 2 to line 21, column 3)",
   " (in '../unenforce-initialize-omni.stan', line 24, column 2 to column 20)",
@@ -100,11 +101,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(y));
         {
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(1),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(1),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -128,11 +131,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
             }
           }
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(2),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(2),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -156,11 +161,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
             }
           }
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(3),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(3),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -186,11 +193,11 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
         }
         stan::model::assign(x, 0, "assigning variable x",
           stan::model::index_uni(1));
-        current_statement__ = 11;
+        current_statement__ = 12;
         stan::model::assign(arr2, 0, "assigning variable arr2",
           stan::model::index_uni(1), stan::model::index_uni(1),
           stan::model::index_uni(1));
-        current_statement__ = 12;
+        current_statement__ = 13;
         if (pstream__) {
           stan::math::stan_print(pstream__,
             stan::model::rvalue(x, "x", stan::model::index_uni(2)));
@@ -257,11 +264,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
         lp_accum__.add(stan::math::std_normal_lpdf<propto__>(y));
         {
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(1),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(1),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -285,11 +294,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
             }
           }
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(2),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(2),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -313,11 +324,13 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
             }
           }
           {
-            current_statement__ = 8;
-            lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
-                             stan::model::rvalue(arr, "arr",
-                               stan::model::index_uni(3),
-                               stan::model::index_uni(1))));
+            {
+              current_statement__ = 8;
+              lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
+                               stan::model::rvalue(arr, "arr",
+                                 stan::model::index_uni(3),
+                                 stan::model::index_uni(1))));
+            }
             {
               current_statement__ = 8;
               lp_accum__.add(stan::math::std_normal_lpdf<propto__>(
@@ -343,11 +356,11 @@ class unenforce_initialize_omni_model final : public model_base_crtp<unenforce_i
         }
         stan::model::assign(x, 0, "assigning variable x",
           stan::model::index_uni(1));
-        current_statement__ = 11;
+        current_statement__ = 12;
         stan::model::assign(arr2, 0, "assigning variable arr2",
           stan::model::index_uni(1), stan::model::index_uni(1),
           stan::model::index_uni(1));
-        current_statement__ = 12;
+        current_statement__ = 13;
         if (pstream__) {
           stan::math::stan_print(pstream__,
             stan::model::rvalue(x, "x", stan::model::index_uni(2)));

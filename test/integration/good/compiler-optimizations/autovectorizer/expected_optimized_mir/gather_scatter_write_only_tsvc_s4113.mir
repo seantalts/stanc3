@@ -32,7 +32,9 @@ log_prob {
     FnValidateSize__("a2", "N", N);
     vector[N] a2;
     a2 = a0;
-    a2[ip[1:N]] = (b[ip[1:N]] + c[1:N]);
+    if((N >= 1)) {
+      a2[ip[1:N]] = (b[ip[1:N]] + c[1:N]);
+    }
     target += sum(a2);
   } }
 
@@ -41,7 +43,9 @@ rev_log_prob {
     FnValidateSize__("a2", "N", N);
     vector[N] a2;
     a2 = a0;
-    a2[ip[1:N]] = (b[ip[1:N]] + c[1:N]);
+    if((N >= 1)) {
+      a2[ip[1:N]] = (b[ip[1:N]] + c[1:N]);
+    }
     target += sum(a2);
   } }
 
