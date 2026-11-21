@@ -110,6 +110,13 @@ let stan_math_return_type name args =
   let arg_types = List.map ~f:Expr.Typed.fun_arg args in
   Frontend.Typechecker.stan_math_return_type name arg_types
 
+(* A rewrite must keep the type of the expression it replaces: fma of three
+   integers is a real, so an integer d * i + j stays as it is. *)
+let changes_type (e : Expr.Typed.t) = function
+  | Some (UnsizedType.ReturnType t) ->
+      not (UnsizedType.equal t (Expr.Typed.type_of e))
+  | Some Void | None -> false
+
 let is_multi_index = function
   | Index.MultiIndex _ | Upfrom _ | Between _ | All -> true
   | Single _ -> false
@@ -132,10 +139,12 @@ let rec eval_expr ?(preserve_stability = false) (e : Expr.Typed.t) =
                   | FunApp (Operator op', l')
                     when not (Operator.compare op op' = 0 && l == l') -> (
                       match stan_operator_return_type op' l' with
+                      | rt when changes_type e rt -> e.pattern
                       | Some _ -> e'
                       | None -> e.pattern)
                   | FunApp (StanLib (f', _), l') -> (
                       match stan_math_return_type f' l' with
+                      | rt when changes_type e rt -> e.pattern
                       | Some _ -> e'
                       | None -> e.pattern)
                   | _ -> e') in
@@ -319,10 +328,12 @@ let rec eval_expr ?(preserve_stability = false) (e : Expr.Typed.t) =
                   | FunApp (StanLib (f', _), l')
                     when not (String.equal f f' && l == l') -> (
                       match stan_math_return_type f' l' with
+                      | rt when changes_type e rt -> e.pattern
                       | Some _ -> e'
                       | None -> e.pattern)
                   | FunApp (Operator op', l') -> (
                       match stan_operator_return_type op' l' with
+                      | rt when changes_type e rt -> e.pattern
                       | Some _ -> e'
                       | None -> e.pattern)
                   | _ -> e') in

@@ -2379,6 +2379,52 @@ let%expect_test "partial evaluate reject" =
         if(!(emit_generated_quantities__)) return;
       } |}]
 
+let%expect_test "partial evaluation keeps integer arithmetic integer" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      data {
+        int d;
+        int i;
+        int j;
+        array[10] real x;
+      }
+      model {
+        print(x[d * (i - 1) + j]);
+        print(x[1] * x[2] + x[3]);
+      }
+      |} in
+  let mir = partial_evaluation mir in
+  Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
+  [%expect {|
+    input_vars {
+      int d;
+      int i;
+      int j;
+      array[real, 10] x;
+    }
+
+    prepare_data {
+      data int d;
+      data int i;
+      data int j;
+      data array[real, 10] x;
+    }
+
+    log_prob {
+      {
+        FnPrint__(x[((d * (i - 1)) + j)]);
+        FnPrint__(fma(x[1], x[2], x[3]));
+      }
+    }
+
+
+    generate_quantities {
+      if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+      if(!(emit_generated_quantities__)) return;
+    }
+    |}]
+
 let%expect_test "try partially evaluate" =
   let mir =
     reset_and_mir_of_string
