@@ -1134,6 +1134,10 @@ and vectorize_stmt_inner outer_info Stmt.{pattern; meta} :
         ( {loop_info with writes= Set.Poly.add lhs loop_info.writes}
         , {pattern; meta} )
   | Break | Continue -> ({outer_info with breaks= true}, {pattern; meta})
+  | NRFunApp ((UserDefined (_, FnTarget) | StanLib (_, FnTarget)), _) ->
+      (* An [_lp] function can read [target()] *)
+      let loop_info, pattern = collect_reads outer_info pattern in
+      ({loop_info with target= true}, {pattern; meta})
   | (For _ | While _) as pattern ->
       let loop_info, pattern = collect_reads outer_info pattern in
       ({loop_info with breaks= outer_info.breaks}, {pattern; meta})
