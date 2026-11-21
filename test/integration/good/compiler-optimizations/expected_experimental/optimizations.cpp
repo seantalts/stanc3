@@ -713,7 +713,9 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
         dataonlyvar = static_cast<double>(3);
         current_statement__ = 82;
         lp_accum__.add(dataonlyvar);
-        local_scalar_t__ paramvar = DUMMY_VAR__;
+        local_scalar_t__ paramvar;
+        current_statement__ = 83;
+        paramvar = static_cast<double>(3);
         {
           current_statement__ = 84;
           paramvar = (theta * 34);
@@ -1222,7 +1224,9 @@ class optimizations_model final : public model_base_crtp<optimizations_model> {
         dataonlyvar = static_cast<double>(3);
         current_statement__ = 82;
         lp_accum__.add(dataonlyvar);
-        local_scalar_t__ paramvar = DUMMY_VAR__;
+        local_scalar_t__ paramvar;
+        current_statement__ = 83;
+        paramvar = static_cast<double>(3);
         {
           current_statement__ = 84;
           paramvar = (theta * 34);

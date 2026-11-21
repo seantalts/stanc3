@@ -691,9 +691,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                  <= lcm116__; ++inline_prob_uncaptured_t19__) {
               int inline_prob_uncaptured_t_curr17__ =
                 std::numeric_limits<int>::min();
+              lcm115__ = (n_occasions - inline_prob_uncaptured_t19__);
               int inline_prob_uncaptured_t_next18__ =
                 std::numeric_limits<int>::min();
-              lcm115__ = (n_occasions - inline_prob_uncaptured_t19__);
               lcm111__ = (lcm115__ + 1);
               current_statement__ = 24;
               stan::model::assign(inline_prob_uncaptured_chi16__,
@@ -749,9 +749,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                    <= lcm116__; ++inline_prob_uncaptured_t19__) {
                 int inline_prob_uncaptured_t_curr17__ =
                   std::numeric_limits<int>::min();
+                lcm115__ = (n_occasions - inline_prob_uncaptured_t19__);
                 int inline_prob_uncaptured_t_next18__ =
                   std::numeric_limits<int>::min();
-                lcm115__ = (n_occasions - inline_prob_uncaptured_t19__);
                 lcm111__ = (lcm115__ + 1);
                 current_statement__ = 24;
                 stan::model::assign(inline_prob_uncaptured_chi16__,
@@ -1116,9 +1116,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                  <= lcm73__; ++inline_prob_uncaptured_t12__) {
               int inline_prob_uncaptured_t_curr10__ =
                 std::numeric_limits<int>::min();
+              lcm72__ = (n_occasions - inline_prob_uncaptured_t12__);
               int inline_prob_uncaptured_t_next11__ =
                 std::numeric_limits<int>::min();
-              lcm72__ = (n_occasions - inline_prob_uncaptured_t12__);
               lcm68__ = (lcm72__ + 1);
               current_statement__ = 24;
               stan::model::assign(inline_prob_uncaptured_chi9__,
@@ -1174,9 +1174,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                    <= lcm73__; ++inline_prob_uncaptured_t12__) {
                 int inline_prob_uncaptured_t_curr10__ =
                   std::numeric_limits<int>::min();
+                lcm72__ = (n_occasions - inline_prob_uncaptured_t12__);
                 int inline_prob_uncaptured_t_next11__ =
                   std::numeric_limits<int>::min();
-                lcm72__ = (n_occasions - inline_prob_uncaptured_t12__);
                 lcm68__ = (lcm72__ + 1);
                 current_statement__ = 24;
                 stan::model::assign(inline_prob_uncaptured_chi9__,
@@ -1545,9 +1545,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                  <= lcm34__; ++inline_prob_uncaptured_t5__) {
               int inline_prob_uncaptured_t_curr3__ =
                 std::numeric_limits<int>::min();
+              lcm33__ = (n_occasions - inline_prob_uncaptured_t5__);
               int inline_prob_uncaptured_t_next4__ =
                 std::numeric_limits<int>::min();
-              lcm33__ = (n_occasions - inline_prob_uncaptured_t5__);
               lcm29__ = (lcm33__ + 1);
               current_statement__ = 24;
               stan::model::assign(inline_prob_uncaptured_chi2__,
@@ -1603,9 +1603,9 @@ class expr_prop_fail5_model final : public model_base_crtp<expr_prop_fail5_model
                    <= lcm34__; ++inline_prob_uncaptured_t5__) {
                 int inline_prob_uncaptured_t_curr3__ =
                   std::numeric_limits<int>::min();
+                lcm33__ = (n_occasions - inline_prob_uncaptured_t5__);
                 int inline_prob_uncaptured_t_next4__ =
                   std::numeric_limits<int>::min();
-                lcm33__ = (n_occasions - inline_prob_uncaptured_t5__);
                 lcm29__ = (lcm33__ + 1);
                 current_statement__ = 24;
                 stan::model::assign(inline_prob_uncaptured_chi2__,

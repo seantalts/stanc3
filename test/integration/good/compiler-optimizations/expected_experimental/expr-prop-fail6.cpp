@@ -3353,16 +3353,14 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
           if (stan::math::logical_gte(n_occasions, 2)) {
             lcm127__ = stan::model::rvalue(z, "z", stan::model::index_uni(1),
                          stan::model::index_uni(1));
-            lcm107__ = (1 * (1 - lcm127__));
-            q = lcm107__;
+            q = (1 * (1 - lcm127__));
             current_statement__ = 44;
             stan::model::assign(z,
               stan::math::bernoulli_rng(
                 stan::math::fma(static_cast<double>(lcm127__),
                   stan::model::rvalue(lcm85__, "lcm85__",
-                    stan::model::index_uni(1), stan::model::index_uni(1)),
-                  (lcm107__ *
-                  stan::model::rvalue(nu, "nu", stan::model::index_uni(2)))),
+                    stan::model::index_uni(1), stan::model::index_uni(1)), (q
+                  * stan::model::rvalue(nu, "nu", stan::model::index_uni(2)))),
                 base_rng__), "assigning variable z",
               stan::model::index_uni(1), stan::model::index_uni(2));
             for (int t = 3; t <= n_occasions; ++t) {
@@ -3403,10 +3401,10 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
               stan::model::index_uni(i), stan::model::index_uni(1));
             current_statement__ = 47;
             if (stan::math::logical_gte(n_occasions, 2)) {
-              lcm106__ = (1 * (1 -
+              current_statement__ = 45;
+              q = (1 * (1 -
                 stan::model::rvalue(z, "z", stan::model::index_uni(i),
                   stan::model::index_uni(1))));
-              q = lcm106__;
               current_statement__ = 44;
               stan::model::assign(z,
                 stan::math::bernoulli_rng(
@@ -3416,7 +3414,7 @@ class expr_prop_fail6_model final : public model_base_crtp<expr_prop_fail6_model
                         stan::model::index_uni(1))),
                     stan::model::rvalue(lcm85__, "lcm85__",
                       stan::model::index_uni(i), stan::model::index_uni(1)),
-                    (lcm106__ *
+                    (q *
                     stan::model::rvalue(nu, "nu", stan::model::index_uni(2)))),
                   base_rng__), "assigning variable z",
                 stan::model::index_uni(i), stan::model::index_uni(2));

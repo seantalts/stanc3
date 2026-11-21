@@ -10,7 +10,7 @@ open Dataflow_types
     program as one block. *)
 let transform_program (mir : Program.Typed.t)
     (transform : Stmt.Located.t -> Stmt.Located.t) : Program.Typed.t =
-  let packed_prog_body =
+  let transformed_prog_body =
     transform
       { pattern=
           SList
@@ -19,7 +19,6 @@ let transform_program (mir : Program.Typed.t)
                [ mir.prepare_data; mir.transform_inits; mir.log_prob
                ; mir.reverse_mode_log_prob; mir.generate_quantities ])
       ; meta= Location_span.empty } in
-  let transformed_prog_body = transform packed_prog_body in
   let transformed_functions =
     List.map mir.functions_block ~f:(fun fs ->
         Program.{fs with fdbody= Option.map ~f:transform fs.fdbody}) in

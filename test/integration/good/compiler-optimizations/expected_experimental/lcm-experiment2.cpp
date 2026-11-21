@@ -77,6 +77,7 @@ class lcm_experiment2_model final : public model_base_crtp<lcm_experiment2_model
       {
         local_scalar_t__ y = DUMMY_VAR__;
         lcm6__ = stan::math::log(x);
+        y = lcm6__;
         {
           current_statement__ = 3;
           y = (lcm6__ + 1);
@@ -126,6 +127,7 @@ class lcm_experiment2_model final : public model_base_crtp<lcm_experiment2_model
       {
         local_scalar_t__ y = DUMMY_VAR__;
         lcm3__ = stan::math::log(x);
+        y = lcm3__;
         {
           current_statement__ = 3;
           y = (lcm3__ + 1);

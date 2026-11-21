@@ -33,6 +33,7 @@ compares unoptimized and optimized output of the same program.
 | --- | --- | --- | --- |
 | Dataflow analyses | Compile time grew about cubically with the number of inlined calls: 100 calls of a 9-way dispatch function took 91 s. (stan-dev/stanc3#1769) | a model with 100 calls of a dispatch function | be157d02f |
 | Function inlining | A nontrivial scalar argument used several times in the body was evaluated once per use. | not recorded | 767e8e5b0 |
+| Dataflow passes | Constant propagation, copy propagation, dead code elimination and partial evaluation each ran twice over the program blocks, and once over each function body. Function bodies show that one run was intended. Removing the second run makes forced O1 about 1.9x faster on the largest stanli corpus models (mlumr_survival_relaxed 9.3 s to 4.8 s). | Reading `transform_program` while measuring O1 compile time | the commit that adds this row |
 
 ## Open
 

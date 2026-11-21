@@ -3293,14 +3293,13 @@ class inlining_fail2_model final : public model_base_crtp<inlining_fail2_model> 
         if (lcm130__) {
           lcm142__ = stan::model::rvalue(z, "z", stan::model::index_uni(1),
                        stan::model::index_uni(1));
-          lcm125__ = (1 * (1 - lcm142__));
-          q = lcm125__;
+          q = (1 * (1 - lcm142__));
           lcm92__ = stan::math::fma(
                       stan::model::rvalue(phi, "phi",
                         stan::model::index_uni(1), stan::model::index_uni(1)),
                       static_cast<double>(lcm142__),
                       (stan::model::rvalue(gamma, "gamma",
-                         stan::model::index_uni(2)) * lcm125__));
+                         stan::model::index_uni(2)) * q));
           current_statement__ = 34;
           stan::model::assign(z,
             stan::math::bernoulli_rng(lcm92__, base_rng__),
@@ -3338,10 +3337,10 @@ class inlining_fail2_model final : public model_base_crtp<inlining_fail2_model> 
             stan::model::index_uni(1));
           current_statement__ = 38;
           if (lcm130__) {
-            lcm124__ = (1 * (1 -
+            current_statement__ = 35;
+            q = (1 * (1 -
               stan::model::rvalue(z, "z", stan::model::index_uni(i),
                 stan::model::index_uni(1))));
-            q = lcm124__;
             lcm90__ = stan::math::fma(
                         stan::model::rvalue(phi, "phi",
                           stan::model::index_uni(i),
@@ -3351,7 +3350,7 @@ class inlining_fail2_model final : public model_base_crtp<inlining_fail2_model> 
                             stan::model::index_uni(i),
                             stan::model::index_uni(1))),
                         (stan::model::rvalue(gamma, "gamma",
-                           stan::model::index_uni(2)) * lcm124__));
+                           stan::model::index_uni(2)) * q));
             current_statement__ = 34;
             stan::model::assign(z,
               stan::math::bernoulli_rng(lcm90__, base_rng__),

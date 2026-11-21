@@ -2034,6 +2034,66 @@ let%expect_test "dead code elimination decl" =
         }
       } |}]
 
+let%expect_test "dead code elimination sweeps the model block once, as it does a function body" =
+  let mir =
+    reset_and_mir_of_string
+      {|
+      functions {
+        void f(real x) {
+          real a;
+          a = x;
+          real b;
+          b = a;
+        }
+      }
+      parameters {
+        real x;
+      }
+      model {
+        real a;
+        a = x;
+        real b;
+        b = a;
+      }
+      |}
+  in
+  let mir = dead_code_elimination mir in
+  Fmt.str "@[<v>%a@]" Program.Typed.pp mir |> print_endline;
+  [%expect
+    {|
+      functions {
+        void f(real x) {
+          {
+            real a;
+            a = x;
+            real b;
+          }
+        }
+      }
+
+
+
+      log_prob {
+        real x;
+        {
+          real a;
+          a = x;
+          real b;
+        }
+      }
+
+
+      generate_quantities {
+        data real x;
+        if(!(emit_transformed_parameters__ || emit_generated_quantities__)) return;
+        if(!(emit_generated_quantities__)) return;
+      }
+
+
+      output_vars {
+        parameters real x; //real
+      } |}]
+
 let%expect_test "dead code elimination, for loop" =
   let mir =
     reset_and_mir_of_string
