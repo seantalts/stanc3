@@ -928,10 +928,67 @@ type 'a vector_state =
   | Error
 [@@deriving map]
 
-let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
-    loopvar lower upper body : Stmt.Located.t =
-  let dont_read = conflict_info.writes in
-  let dont_write = Set.Poly.union conflict_info.reads conflict_info.conflicts in
+(* The variables of a loop body that are private to the row: every mention of
+   such a variable in the body, read or write, is the same element, and the loop
+   variable is one of that element's indices. Iteration [n] is then the only one
+   that touches the element, so the statements that mention it can each run over
+   all rows, as long as they keep their order. *)
+let row_private_vars loopvar lower upper (conflict_info : conflicts)
+    (body : Stmt.Located.t) =
+  let same_element idcs idcs' =
+    List.equal idcs idcs' ~eq:(fun i i' ->
+        Index.compare Expr.Typed.compare i i' = 0) in
+  let is_private var =
+    let element = ref None in
+    let rec indices_ok idcs =
+      List.for_all idcs ~f:(Index.fold (fun a e -> a && expr_ok e) true)
+    and mention_ok idcs =
+      indices_ok idcs
+      &&
+      match !element with
+      | Some idcs' -> same_element idcs idcs'
+      | None ->
+          element := Some idcs;
+          List.exists idcs ~f:(function
+            | Index.Single Expr.{pattern= Var i; _} -> String.equal i loopvar
+            | _ -> false)
+          && List.for_all idcs ~f:(fun i ->
+              Set.Poly.disjoint conflict_info.writes
+                (Index.fold
+                   (fun s e -> Set.Poly.union s (expr_var_names_set e))
+                   Set.Poly.empty i))
+    and expr_ok (e : Expr.Typed.t) =
+      match e.pattern with
+      | Var x -> not (String.equal x var)
+      | Indexed ({pattern= Var x; _}, idcs) when String.equal x var ->
+          mention_ok idcs
+      | pattern -> Expr.Pattern.fold (fun a e -> a && expr_ok e) true pattern
+    in
+    let rec stmt_ok (s : Stmt.Located.t) =
+      match s.pattern with
+      | Assignment ((LVariable x, idcs), _, rhs) when String.equal x var ->
+          mention_ok idcs && expr_ok rhs
+      | Assignment (lval, _, _)
+        when String.equal (Stmt.Helpers.lhs_variable lval) var ->
+          false
+      | pattern ->
+          Stmt.Pattern.fold
+            (fun a e -> a && expr_ok e)
+            (fun a s -> a && stmt_ok s)
+            true pattern in
+    expr_ok lower && expr_ok upper && stmt_ok body in
+  Set.Poly.filter conflict_info.writes ~f:is_private
+
+(* Returns the rewritten loop, and whether the whole body became vector
+   statements. *)
+let vectorized_for_with ~row_private (meta : Stmt.Located.Meta.t)
+    (conflict_info : conflicts) loopvar lower upper body : Stmt.Located.t * bool
+    =
+  let dont_read = Set.Poly.diff conflict_info.writes row_private in
+  let dont_write =
+    Set.Poly.diff
+      (Set.Poly.union conflict_info.reads conflict_info.conflicts)
+      row_private in
   (* A user function can print, so it must keep being called as often as the
      loop calls it. *)
   let calls_user_function =
@@ -1090,15 +1147,30 @@ let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
     conflict_info.breaks || calls_user_function lower
     || calls_user_function upper
     || not (Set.Poly.disjoint conflict_info.writes (expr_var_names_set upper))
-  then For {loopvar; lower; upper; body} |> swrap
+  then (For {loopvar; lower; upper; body} |> swrap, false)
   else
     match collect [] body with
-    | [], Some body -> For {loopvar; lower; upper; body} |> swrap
-    | [], None -> SList [] |> swrap
+    | [], Some body -> (For {loopvar; lower; upper; body} |> swrap, false)
+    | [], None -> (SList [] |> swrap, true)
     | stmts, Some body ->
-        SList [when_nonempty stmts; For {loopvar; lower; upper; body} |> swrap]
-        |> swrap
-    | stmts, None -> when_nonempty stmts
+        ( SList [when_nonempty stmts; For {loopvar; lower; upper; body} |> swrap]
+          |> swrap
+        , false )
+    | stmts, None -> (when_nonempty stmts, true)
+
+(* The vectorized statements run before what is left of the loop, so a statement
+   may only move ahead of the loop if it reads nothing that the loop writes. A
+   variable that is private to the row is exempt from that rule when the whole
+   body vectorizes, because the statements then keep their order. *)
+let vectorized_for (meta : Stmt.Located.Meta.t) (conflict_info : conflicts)
+    loopvar lower upper body : Stmt.Located.t =
+  let attempt row_private =
+    vectorized_for_with ~row_private meta conflict_info loopvar lower upper body
+  in
+  let row_private = row_private_vars loopvar lower upper conflict_info body in
+  match attempt row_private with
+  | stmt, true -> stmt
+  | _ -> fst (attempt Set.Poly.empty)
 
 let rec vectorize_stmt : Stmt.Located.t -> Stmt.Located.t = function
   | {pattern= For {loopvar; lower; upper; body}; meta}

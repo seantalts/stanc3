@@ -1,0 +1,106 @@
+/* $ stanc -fvectorize-loops --debug-optimized-mir-pretty ../row_private_repeated_updates.stan : [exit 0] */
+input_vars {
+  int N;
+  int J;
+  array[int, N] j1;
+  vector[N] x;
+  vector[N] y; }
+
+prepare_data {
+  data int pos__;
+  pos__ = 1;
+  data int N;
+  FnReadData__(N, context__, "N");
+  (FnCheck(trans(Lower 1))(var_name N)(var N))__(1);
+  data int J;
+  FnReadData__(J, context__, "J");
+  (FnCheck(trans(Lower 1))(var_name J)(var J))__(1);
+  FnValidateSize__("j1", "N", N);
+  data array[int, N] j1;
+  FnReadData__(j1, context__, "j1");
+  (FnCheck(trans(Lower 1))(var_name j1)(var j1))__(1);
+  (FnCheck(trans(Upper J))(var_name j1)(var j1))__(J);
+  FnValidateSize__("x", "N", N);
+  data vector[N] x;
+  FnReadData__(x, context__, "x");
+  FnValidateSize__("y", "N", N);
+  data vector[N] y;
+  FnReadData__(y, context__, "y");
+  FnValidateSize__("r1", "J", J); }
+
+log_prob {
+  real b = (FnReadParam(constrain Identity)(dims())(mem_pattern AoS))__();
+  vector[J]
+    r1 = (FnReadParam(constrain Identity)(dims(J))(mem_pattern AoS))__(
+    );
+  real
+    sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
+    );
+  {
+    FnValidateSize__("mu", "N", N);
+    vector[N] mu;
+    mu = rep_vector(0.0, N);
+    if((N >= 1)) {
+      mu[1:N] = (mu[1:N] + r1[j1[1:N]]);
+      mu[1:N] = (mu[1:N] + (b * x[1:N]));
+      target += normal_lpdf(y[1:N], mu[1:N], sigma);
+    }
+  } }
+
+rev_log_prob {
+  real b = (FnReadParam(constrain Identity)(dims())(mem_pattern AoS))__();
+  vector[J]
+    r1 = (FnReadParam(constrain Identity)(dims(J))(mem_pattern AoS))__(
+    );
+  real
+    sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
+    );
+  {
+    FnValidateSize__("mu", "N", N);
+    vector[N] mu;
+    mu = rep_vector(0.0, N);
+    if((N >= 1)) {
+      mu[1:N] = (mu[1:N] + r1[j1[1:N]]);
+      mu[1:N] = (mu[1:N] + (b * x[1:N]));
+      target += normal_lpdf(y[1:N], mu[1:N], sigma);
+    }
+  } }
+
+generate_quantities {
+  data real
+    b = (FnReadParam(constrain Identity)(dims())(mem_pattern AoS))__(
+    );
+  data vector[J]
+    r1 = (FnReadParam(constrain Identity)(dims(J))(mem_pattern AoS))__(
+    );
+  data real
+    sigma = (FnReadParam(constrain(Lower 0))(dims())(mem_pattern AoS))__(
+    );
+  (FnWriteParam(unconstrain_opt())(var b))__();
+  (FnWriteParam(unconstrain_opt())(var r1))__();
+  (FnWriteParam(unconstrain_opt())(var sigma))__();
+  if(!(emit_transformed_parameters__ || emit_generated_quantities__)) {
+    return;
+  }
+  if(!(emit_generated_quantities__)) {
+    return;
+  } }
+
+transform_inits {
+  data int pos__;
+  pos__ = 1;
+  real b;
+  FnReadData__(b, context__, "b");
+  (FnWriteParam(unconstrain_opt(Identity))(var b))__();
+  vector[J] r1;
+  FnReadData__(r1, context__, "r1");
+  (FnWriteParam(unconstrain_opt(Identity))(var r1))__();
+  real sigma;
+  FnReadData__(sigma, context__, "sigma");
+  (FnWriteParam(unconstrain_opt((Lower 0)))(var sigma))__(); }
+
+output_vars {
+  parameters real b; //real
+  parameters vector[J] r1; //vector[J]
+  parameters real sigma; //real
+}
